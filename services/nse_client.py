@@ -4,9 +4,6 @@ from datetime import date, timedelta
 
 class NSEClient:
 
-    # -----------------------------
-    # Get live quote
-    # -----------------------------
     def get_quote(self, symbol):
         try:
             data = nse_eq(symbol)
@@ -15,9 +12,6 @@ class NSEClient:
             print(f"Quote error for {symbol}: {e}")
             return None
 
-    # -----------------------------
-    # Get 1Y historical data
-    # -----------------------------
     def get_1y_history(self, symbol):
         try:
             print(f"Fetching history: {symbol}")
@@ -27,12 +21,13 @@ class NSEClient:
 
             data = equity_history(
                 symbol,
+                "EQ",  # 🔥 REQUIRED SERIES PARAMETER
                 start_date.strftime("%d-%m-%Y"),
                 end_date.strftime("%d-%m-%Y")
             )
 
-            if data is None:
-                print(f"No data returned for {symbol}")
+            if data is None or len(data) == 0:
+                print(f"No data for {symbol}")
                 return None
 
             print(f"Got {symbol}: {len(data)} rows")
