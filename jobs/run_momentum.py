@@ -1,9 +1,5 @@
-import sys
-import os
 import json
-
-# 🔥 FORCE project root in path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import os
 
 from services.nse_client import NSEClient
 from services.data_builder import build_dataset
