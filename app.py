@@ -18,49 +18,63 @@ SYMBOLS = [
 @app.route("/momentum/top")
 def top_momentum():
 
-    results = []
+    try:
+        results = []
 
-    for s in SYMBOLS:
+        for s in SYMBOLS:
 
-        # 1. Fetch data
-        raw = client.get_1y_history(s)
-        if raw is None:
-            continue
+            print(f"\n--- Processing {s} ---")
 
-        # 2. Build dataset
-        clean = build_dataset(raw, s)
-        if clean is None or len(clean) == 0:
-            continue
+            raw = client.get_1y_history(s)
+            if raw is None:
+                print(f"RAW None: {s}")
+                continue
 
-        # 3. Momentum scoring
-        scored = calculate_momentum(clean)
+            clean = build_dataset(raw, s)
+            if clean is None or clean.empty:
+                print(f"CLEAN empty: {s}")
+                continue
 
-        if scored is None or scored.empty:
-            continue
+            scored = calculate_momentum(clean)
 
-        # 4. IMPORTANT FIX:
-        # pick TOP momentum row (not last row)
-        top_row = scored.iloc[0]
+            if scored is None:
+                print(f"SCORED None: {s}")
+                continue
 
-        if "momentum_score" not in top_row:
-            continue
+            if scored.empty:
+                print(f"SCORED empty: {s}")
+                continue
 
-        results.append({
-            "symbol": s,
-            "score": float(top_row["momentum_score"])
-        })
+            print(f"SCORING OK {s}: {len(scored)} rows")
 
-    # 5. sort final output
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
+            top_row = scored.iloc[0]
 
-    # 6. safe response
-    if not results:
+            results.append({
+                "symbol": s,
+                "score": float(top_row["momentum_score"])
+            })
+
+        results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+        print("\nFINAL RESULTS:", results)
+
+        if not results:
+            return jsonify({
+                "status": "error",
+                "message": "No stock data fetched"
+            }), 500
+
+        return jsonify(results)
+
+    except Exception as e:
+        print("\n🔥 FLASK CRASH ERROR:", str(e))
+        import traceback
+        traceback.print_exc()
+
         return jsonify({
             "status": "error",
-            "message": "No stock data fetched"
+            "message": str(e)
         }), 500
-
-    return jsonify(results)
 
 
 if __name__ == "__main__":
