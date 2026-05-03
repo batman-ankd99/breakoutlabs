@@ -1,33 +1,26 @@
-from services.nse_client import NSEClient
-from services.universe import get_universe
+import pandas as pd
 
-client = NSEClient()
 
-def build_dataset():
-    stocks = get_universe()
-    data = []
+def build_dataset(df, symbol):
+    """
+    ONLY ensures schema consistency.
+    NO returns calculation here.
+    """
 
-    for s in stocks:
-        try:
-            history = client.get_1y_history(s)
+    if df is None or df.empty:
+        return None
 
-            if history is None or len(history) < 2:
-                print(f"Skipping {s} - no data")
-                continue
+    df = df.copy()
+    df["symbol"] = symbol
 
-            start = history.iloc[0]["Close"]
-            end = history.iloc[-1]["Close"]
+    required_cols = ["Date", "Open", "High", "Low", "Close", "Volume"]
 
-            return_12m = ((end - start) / start) * 100
+    for col in required_cols:
+        if col not in df.columns:
+            raise ValueError(f"Missing {col} in dataset")
 
-            data.append({
-                "symbol": s,
-                "return_12m": return_12m,
-                "return_6m": return_12m * 0.6,   # placeholder for now
-                "return_3m": return_12m * 0.3    # placeholder for now
-            })
+    df = df[required_cols + ["symbol"]]
 
-        except Exception as e:
-            print(f"Error {s}: {e}")
+    df = df.sort_values("Date").reset_index(drop=True)
 
-    return data
+    return df
