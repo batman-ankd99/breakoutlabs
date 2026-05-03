@@ -1,39 +1,43 @@
 from nsepython import nse_eq, equity_history
 from datetime import date, timedelta
 
+
 class NSEClient:
 
+    # -----------------------------
+    # Get live quote
+    # -----------------------------
     def get_quote(self, symbol):
-        data = nse_eq(symbol)
-        return data["priceInfo"]
+        try:
+            data = nse_eq(symbol)
+            return data.get("priceInfo", {})
+        except Exception as e:
+            print(f"Quote error for {symbol}: {e}")
+            return None
 
+    # -----------------------------
+    # Get 1Y historical data
+    # -----------------------------
     def get_1y_history(self, symbol):
-        end = date.today()
-        start = end - timedelta(days=365)
+        try:
+            print(f"Fetching history: {symbol}")
 
-        return equity_history(
-            symbol,
-            start.strftime("%d-%m-%Y"),
-            end.strftime("%d-%m-%Y")
-        )
+            end_date = date.today()
+            start_date = end_date - timedelta(days=365)
 
-    def get_1y_history(self, symbol):
-    try:
-        print(f"Fetching: {symbol}")
+            data = equity_history(
+                symbol,
+                start_date.strftime("%d-%m-%Y"),
+                end_date.strftime("%d-%m-%Y")
+            )
 
-        end = date.today()
-        start = end - timedelta(days=365)
+            if data is None:
+                print(f"No data returned for {symbol}")
+                return None
 
-        data = equity_history(
-            symbol,
-            start.strftime("%d-%m-%Y"),
-            end.strftime("%d-%m-%Y")
-        )
+            print(f"Got {symbol}: {len(data)} rows")
+            return data
 
-        print(f"Got data for {symbol}: {len(data)} rows")
-
-        return data
-
-    except Exception as e:
-        print(f"ERROR for {symbol}: {e}")
-        return None    
+        except Exception as e:
+            print(f"ERROR for {symbol}: {e}")
+            return None
