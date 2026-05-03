@@ -4,40 +4,38 @@ import pandas as pd
 
 class NSEClient:
 
-    def get_quote(self, symbol):
-        try:
-            ticker = symbol.replace("-EQ", "") + ".NS"
-            data = yf.Ticker(ticker).info
-            return data
-        except Exception as e:
-            print(f"Quote error: {e}")
-            return None
-
-    def get_1y_history(self, symbol):
+    def get_1y_history(self, symbol: str):
         try:
             ticker = symbol.replace("-EQ", "") + ".NS"
             print(f"Fetching: {ticker}")
 
-            df = yf.download(ticker, period="1y", progress=False)
+            df = yf.download(
+                ticker,
+                period="1y",
+                interval="1d",
+                progress=False,
+                auto_adjust=False
+            )
 
             if df is None or df.empty:
-                print(f"No data for {symbol}")
+                print(f"[ERROR] No data for {symbol}")
                 return None
 
-            # 🔥 CRITICAL FIX: flatten columns (THIS WAS THE BUG)
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-
-            # strip spaces just in case
-            df.columns = [str(c).strip() for c in df.columns]
-
+            # Reset index so Date becomes column
             df = df.reset_index()
 
+            # Flatten columns (VERY IMPORTANT for yfinance edge cases)
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = ['_'.join(col).strip() for col in df.columns.values]
+
+            # Normalize column names
+            df.columns = [c.lower().replace(" ", "_") for c in df.columns]
+
             print(f"RAW OK {symbol}: {len(df)} rows")
-            print(f"COLUMNS: {list(df.columns)}")
+            print(f"COLUMNS: {df.columns.tolist()}")
 
             return df
 
         except Exception as e:
-            print(f"ERROR: {e}")
+            print(f"[NSE_CLIENT ERROR] {symbol}: {e}")
             return None
