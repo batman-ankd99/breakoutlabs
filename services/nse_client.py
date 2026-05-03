@@ -20,16 +20,16 @@ class NSEClient:
     # 1 YEAR HISTORY (FIXED + ROBUST)
     # -----------------------------
     def get_1y_history(self, symbol):
-    try:
-        print(f"Fetching history: {symbol}")
+        try:
+            print(f"Fetching history: {symbol}")
 
-        raw = equity_history(symbol, "EQ")
+            raw = equity_history(symbol, "EQ")
 
-        print("RAW RESPONSE TYPE:", type(raw))
-        print("RAW RESPONSE:", raw)
+            print("RAW RESPONSE TYPE:", type(raw))
+            print("RAW RESPONSE:", raw)
 
-        return None  # stop pipeline for debugging
+            return None  # stop pipeline for debugging
 
-    except Exception as e:
-        print(f"ERROR: {e}")
-        return None
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return None
