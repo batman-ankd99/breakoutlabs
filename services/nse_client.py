@@ -4,38 +4,37 @@ import pandas as pd
 
 class NSEClient:
 
-    def _to_symbol(self, symbol):
-        return symbol.replace("-EQ", "") + ".NS"
-
-    def get_stock_history(self, symbol):
+    def get_quote(self, symbol):
         try:
-            ticker = self._to_symbol(symbol)
-            print(f"Fetching stock: {ticker}")
-
-            df = yf.download(ticker, period="1y", auto_adjust=False)
-
-            if df is None or df.empty:
-                return None
-
-            df = df.reset_index()
-            return df
-
+            ticker = symbol.replace("-EQ", "") + ".NS"
+            data = yf.Ticker(ticker).info
+            return data
         except Exception as e:
-            print(f"Stock error {symbol}: {e}")
+            print(f"Quote error: {e}")
             return None
 
-    def get_market_history(self):
+    def get_1y_history(self, symbol):
         try:
-            print("Fetching market: ^NSEI")
+            ticker = symbol.replace("-EQ", "") + ".NS"
+            print(f"Fetching: {ticker}")
 
-            df = yf.download("^NSEI", period="1y", auto_adjust=False)
+            df = yf.download(ticker, period="1y", progress=False)
 
             if df is None or df.empty:
+                print(f"No data for {symbol}")
                 return None
 
+            # IMPORTANT: flatten index issues
             df = df.reset_index()
+
+            # Ensure standard columns exist
+            if "Close" not in df.columns:
+                print(f"No Close column for {symbol}, columns: {df.columns}")
+                return None
+
+            print(f"RAW OK {symbol}: {len(df)} rows")
             return df
 
         except Exception as e:
-            print(f"Market error: {e}")
+            print(f"ERROR: {e}")
             return None
