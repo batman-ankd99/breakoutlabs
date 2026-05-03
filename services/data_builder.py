@@ -1,9 +1,7 @@
-def build_dataset(df, symbol):
-    """
-    ONLY cleaning + validation.
-    NO calculations here.
-    """
+import pandas as pd
 
+
+def build_dataset(df, symbol):
     if df is None or df.empty:
         return None
 
@@ -14,9 +12,6 @@ def build_dataset(df, symbol):
 
     for col in required:
         if col not in df.columns:
-            raise ValueError(f"Missing column: {col}")
+            raise ValueError(f"Missing column {col}")
 
-    df = df[required + ["symbol"]]
-    df = df.sort_values("Date").reset_index(drop=True)
-
-    return df
+    return df[required + ["symbol"]].sort_values("Date")

@@ -14,14 +14,21 @@ def calculate_momentum(stock_df, market_df):
     # RETURNS
     # -------------------------
     stock_df["ret_1y"] = stock_df["Close"] / stock_df["Close"].shift(180)
-    market_df["ret_1y_mkt"] = market_df["Close"] / market_df["Close"].shift(180)
-
-    stock_df["rel_strength"] = stock_df["ret_1y"] / market_df["ret_1y_mkt"]
-
-    # -------------------------
-    # SHORT TERM MOMENTUM
-    # -------------------------
     stock_df["ret_3m"] = stock_df["Close"] / stock_df["Close"].shift(45)
+
+    market_df["mkt_ret_1y"] = market_df["Close"] / market_df["Close"].shift(180)
+
+    # -------------------------
+    # ALIGN LENGTH SAFELY
+    # -------------------------
+    min_len = min(len(stock_df), len(market_df))
+    stock_df = stock_df.tail(min_len).reset_index(drop=True)
+    market_df = market_df.tail(min_len).reset_index(drop=True)
+
+    # -------------------------
+    # RELATIVE STRENGTH (CORE IDEA)
+    # -------------------------
+    stock_df["rel_strength"] = stock_df["ret_1y"] / market_df["mkt_ret_1y"]
 
     # -------------------------
     # VOLATILITY
@@ -31,7 +38,7 @@ def calculate_momentum(stock_df, market_df):
     stock_df = stock_df.dropna()
 
     # -------------------------
-    # FINAL SCORE (RELATIVE MOMENTUM)
+    # FINAL MOMENTUM SCORE
     # -------------------------
     stock_df["momentum_score"] = (
         0.6 * stock_df["rel_strength"] +
@@ -39,7 +46,7 @@ def calculate_momentum(stock_df, market_df):
         0.1 * stock_df["Close"].pct_change().rolling(20).mean()
     ) / (stock_df["volatility"] + 1e-6)
 
-    # convert to percentile ranking
+    # convert to percentile ranking (IMPORTANT)
     stock_df["momentum_score"] = stock_df["momentum_score"].rank(pct=True)
 
     return stock_df.sort_values("momentum_score", ascending=False)

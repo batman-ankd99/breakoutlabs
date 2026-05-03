@@ -18,27 +18,29 @@ SYMBOLS = [
 
 @app.route("/")
 def home():
-    return jsonify({
-        "service": "breakoutlabs",
-        "status": "running"
-    })
+    return jsonify({"service": "breakoutlabs", "status": "running"})
 
 
 @app.route("/momentum/top")
-def momentum_top():
+def top_momentum():
+
+    market = client.get_market_history()
+    if market is None:
+        return jsonify({"error": "market data failed"}), 500
 
     results = []
 
     for s in SYMBOLS:
-        raw = client.get_1y_history(s)
-        if raw is None:
+
+        stock = client.get_stock_history(s)
+        if stock is None:
             continue
 
-        clean = build_dataset(raw, s)
+        clean = build_dataset(stock, s)
         if clean is None:
             continue
 
-        scored = calculate_momentum(clean)
+        scored = calculate_momentum(clean, market)
 
         if scored is None or scored.empty:
             continue
