@@ -15,8 +15,8 @@ def build_dataset():
                 print(f"Skipping {s} - no data")
                 continue
 
-            start = history.iloc[0]["CH_CLOSING_PRICE"]
-            end = history.iloc[-1]["CH_CLOSING_PRICE"]
+            start = history.iloc[0]["Close"]
+            end = history.iloc[-1]["Close"]
 
             return_12m = ((end - start) / start) * 100
 
