@@ -1,5 +1,6 @@
 from nsepython import nse_eq, equity_history
 from datetime import date, timedelta
+import pandas as pd
 
 
 class NSEClient:
@@ -9,7 +10,7 @@ class NSEClient:
             data = nse_eq(symbol)
             return data.get("priceInfo", {})
         except Exception as e:
-            print(f"Quote error for {symbol}: {e}")
+            print(f"Quote error: {e}")
             return None
 
     def get_1y_history(self, symbol):
@@ -19,19 +20,34 @@ class NSEClient:
             end_date = date.today()
             start_date = end_date - timedelta(days=365)
 
-            data = equity_history(
+            raw = equity_history(
                 symbol,
-                "EQ",  # 🔥 REQUIRED SERIES PARAMETER
+                "EQ",
                 start_date.strftime("%d-%m-%Y"),
                 end_date.strftime("%d-%m-%Y")
             )
 
-            if data is None or len(data) == 0:
-                print(f"No data for {symbol}")
+            if raw is None:
+                print(f"No raw data for {symbol}")
                 return None
 
-            print(f"Got {symbol}: {len(data)} rows")
-            return data
+            # -----------------------------
+            # Normalize ALL possible formats
+            # -----------------------------
+
+            if isinstance(raw, dict) and "data" in raw:
+                data = raw["data"]
+            else:
+                data = raw
+
+            if not data:
+                print(f"Empty dataset for {symbol}")
+                return None
+
+            df = pd.DataFrame(data)
+
+            print(f"Got {symbol}: {len(df)} rows")
+            return df
 
         except Exception as e:
             print(f"ERROR for {symbol}: {e}")
