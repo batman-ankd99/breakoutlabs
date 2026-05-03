@@ -8,11 +8,9 @@ def build_dataset(df, symbol):
         return None
 
     df = df.copy()
+    df.columns = [str(c).lower() for c in df.columns]
 
-    # normalize
-    df.columns = [c.lower() for c in df.columns]
-
-    # FINAL SAFETY: fix close column variants
+    # find close column safely
     close_col = None
 
     for c in df.columns:
@@ -21,8 +19,7 @@ def build_dataset(df, symbol):
             break
 
     if close_col is None:
-        print(f"[BUILD] No close column found for {symbol}")
-        print(f"[BUILD] Columns: {df.columns}")
+        print(f"[BUILD] No close column for {symbol}")
         return None
 
     df["close"] = pd.to_numeric(df[close_col], errors="coerce")
@@ -32,7 +29,6 @@ def build_dataset(df, symbol):
         print(f"[BUILD] Not enough data: {symbol}")
         return None
 
-    # returns
     df["return_3m"] = df["close"].pct_change(63)
     df["return_6m"] = df["close"].pct_change(126)
     df["return_12m"] = df["close"].pct_change(252)

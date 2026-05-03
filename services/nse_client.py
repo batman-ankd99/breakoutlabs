@@ -24,13 +24,23 @@ class NSEClient:
 
             df = df.reset_index()
 
-            # 🚨 CRITICAL FIX: flatten ALL column types
-            df.columns = [
-                c.split(".")[0].lower() if "." in str(c) else str(c).lower()
-                for c in df.columns
-            ]
+            # ✅ SAFE COLUMN NORMALIZER (handles tuple + string)
+            cleaned_cols = []
 
-            # sometimes yfinance adds weird duplicates → clean again
+            for c in df.columns:
+
+                # tuple case → take first element
+                if isinstance(c, tuple):
+                    c = c[0]
+
+                # string safety
+                c = str(c).lower()
+
+                cleaned_cols.append(c)
+
+            df.columns = cleaned_cols
+
+            # remove duplicates safely
             df = df.loc[:, ~df.columns.duplicated()]
 
             print(f"RAW OK {symbol}: {len(df)} rows")
