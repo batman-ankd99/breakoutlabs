@@ -1,31 +1,41 @@
 import pandas as pd
+import numpy as np
 
 
 def calculate_momentum(df):
 
-    # 🔥 safety check
     if "Close" not in df.columns:
-        raise ValueError(f"Missing Close column. Got: {df.columns}")
+        raise ValueError(f"Missing Close column: {df.columns}")
 
     df = df.copy().reset_index(drop=True)
-
     df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
 
-    # 🔥 shorter lookbacks (important fix)
-    df["return_1y"] = df["Close"] / df["Close"].shift(180) - 1
-    df["return_6m"] = df["Close"] / df["Close"].shift(90) - 1
-    df["return_3m"] = df["Close"] / df["Close"].shift(45) - 1
+    # -------------------------
+    # RETURNS (log-based better)
+    # -------------------------
+    df["ret_1y"] = np.log(df["Close"] / df["Close"].shift(180))
+    df["ret_6m"] = np.log(df["Close"] / df["Close"].shift(90))
+    df["ret_3m"] = np.log(df["Close"] / df["Close"].shift(45))
+
+    # -------------------------
+    # VOLATILITY (risk penalty)
+    # -------------------------
+    df["volatility"] = df["Close"].pct_change().rolling(20).std()
 
     df = df.dropna()
 
-    # 🔥 momentum score
+    # -------------------------
+    # MOMENTUM SCORE (RISK ADJUSTED)
+    # -------------------------
     df["momentum_score"] = (
-        0.5 * df["return_1y"] +
-        0.3 * df["return_6m"] +
-        0.2 * df["return_3m"]
-    )
+        0.5 * df["ret_1y"] +
+        0.3 * df["ret_6m"] +
+        0.2 * df["ret_3m"]
+    ) / (df["volatility"] + 1e-6)
 
-    # 🔥 normalize (VERY IMPORTANT FOR RANKING)
+    # -------------------------
+    # CLEAN NORMALIZATION
+    # -------------------------
     df["momentum_score"] = (
         df["momentum_score"] - df["momentum_score"].mean()
     ) / df["momentum_score"].std()
