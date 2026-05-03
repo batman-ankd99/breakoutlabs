@@ -1,15 +1,21 @@
+import sys
+import os
+import json
+
+# 🔥 FORCE project root in path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from services.nse_client import NSEClient
 from services.data_builder import build_dataset
 from services.momentum_engine import calculate_momentum
 from data.nifty500 import NIFTY500
 
-import json
-
 client = NSEClient()
+
 results = []
 
 for s in NIFTY500:
-    print(f"Processing {s}")
+    print(f"\nProcessing {s}")
 
     raw = client.get_1y_history(s)
     if raw is None:
@@ -30,11 +36,11 @@ for s in NIFTY500:
         "score": float(latest["momentum_score"])
     })
 
-# sort descending
 results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-# save output
+os.makedirs("data", exist_ok=True)
+
 with open("data/momentum_output.json", "w") as f:
     json.dump(results, f, indent=2)
 
-print(f"Saved {len(results)} results")
+print("\nSaved results → data/momentum_output.json")
