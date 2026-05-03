@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Momentum Dashboard</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        button { padding: 10px 20px; margin-bottom: 20px; cursor: pointer; }
+        table { border-collapse: collapse; width: 60%; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #f4f4f4; }
+    </style>
+</head>
+<body>
+
+<h2>📊 Momentum Engine Dashboard</h2>
+
+<button onclick="runMomentum()">🚀 Run Momentum Engine</button>
+<button onclick="loadData()">🔄 Refresh Table</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Symbol</th>
+            <th>Score</th>
+        </tr>
+    </thead>
+    <tbody id="table"></tbody>
+</table>
+
+<script>
+async function runMomentum() {
+    await fetch("/momentum/run", { method: "POST" });
+    alert("Momentum recalculated!");
+    loadData();
+}
+
+async function loadData() {
+    const res = await fetch("/momentum/top");
+    const data = await res.json();
+
+    const table = document.getElementById("table");
+    table.innerHTML = "";
+
+    data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${row.symbol}</td>
+            <td>${row.score.toFixed(4)}</td>
+        `;
+        table.appendChild(tr);
+    });
+}
+
+loadData();
+</script>
+
+</body>
+</html>

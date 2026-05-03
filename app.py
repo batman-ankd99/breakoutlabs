@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 from services.nse_client import NSEClient
 from services.data_builder import build_dataset
 from services.momentum_engine import calculate_momentum
+from flask import render_template
 
 app = Flask(__name__)
 client = NSEClient()
@@ -14,6 +15,9 @@ SYMBOLS = [
     "ICICIBANK-EQ"
 ]
 
+@app.route("/")
+def dashboard():
+    return render_template("dashboard.html")
 
 @app.route("/momentum/top")
 def top_momentum():
@@ -52,6 +56,50 @@ def top_momentum():
     results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     return jsonify(results)
+
+@app.route("/momentum/run", methods=["POST"])
+def run_momentum():
+    results = []
+
+    for s in NIFTY500:
+        raw = client.get_1y_history(s)
+        if raw is None:
+            continue
+
+        clean = build_dataset(raw, s)
+        if clean is None or clean.empty:
+            continue
+
+        scored = calculate_momentum(clean)
+        if scored is None or scored.empty:
+            continue
+
+        latest = scored.iloc[-1]
+
+        results.append({
+            "symbol": s,
+            "score": float(latest["momentum_score"])
+        })
+
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    os.makedirs("data", exist_ok=True)
+    with open("data/momentum_cache.json", "w") as f:
+        json.dump(results, f, indent=2)
+
+    return jsonify({
+        "status": "success",
+        "count": len(results)
+    })
+
+@app.route("/momentum/top")
+def top_momentum():
+    try:
+        with open("data/momentum_cache.json", "r") as f:
+            data = json.load(f)
+        return jsonify(data)
+    except:
+        return jsonify({"status": "no_data"}), 404
 
 
 if __name__ == "__main__":
