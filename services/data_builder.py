@@ -4,7 +4,6 @@ import pandas as pd
 def build_dataset(df: pd.DataFrame, symbol: str):
     try:
         if df is None or df.empty:
-            print(f"[BUILD] empty input: {symbol}")
             return None
 
         df = df.copy()
@@ -12,30 +11,34 @@ def build_dataset(df: pd.DataFrame, symbol: str):
         # normalize
         df.columns = [c.lower().strip() for c in df.columns]
 
-        # ensure sorting (VERY IMPORTANT)
-        if "date" in df.columns:
-            df = df.sort_values("date")
-
         if "close" not in df.columns:
             print(f"[BUILD] missing close: {symbol}")
             return None
 
-        # force numeric (critical safety fix)
         df["close"] = pd.to_numeric(df["close"], errors="coerce")
+        df = df.dropna(subset=["close"])
 
-        # returns
-        df["return_3m"] = df["close"].pct_change(63)
-        df["return_6m"] = df["close"].pct_change(126)
-        df["return_12m"] = df["close"].pct_change(252)
+        df = df.sort_values("date") if "date" in df.columns else df
 
-        # 🔥 IMPORTANT FIX: don't wipe everything
+        n = len(df)
+
+        # 🔥 adaptive windows (KEY FIX)
+        w3 = min(20, max(5, int(n * 0.1)))
+        w6 = min(50, max(10, int(n * 0.25)))
+        w12 = min(100, max(20, int(n * 0.5)))
+
+        df["return_3m"] = df["close"].pct_change(w3)
+        df["return_6m"] = df["close"].pct_change(w6)
+        df["return_12m"] = df["close"].pct_change(w12)
+
+        # safe cleanup (not destructive anymore)
         df = df.dropna(subset=["return_3m", "return_6m", "return_12m"])
 
-        print(f"[BUILD OK] {symbol}: {len(df)} rows after features")
-
-        if len(df) < 5:
+        if len(df) < 10:
             print(f"[BUILD] not enough usable rows: {symbol}")
             return None
+
+        print(f"[BUILD OK] {symbol}: {len(df)} rows after features")
 
         return df
 
