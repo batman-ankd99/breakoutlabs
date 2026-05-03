@@ -21,7 +21,6 @@ def top_momentum():
     results = []
 
     for s in SYMBOLS:
-
         print(f"\n--- Processing {s} ---")
 
         raw = client.get_1y_history(s)
@@ -29,15 +28,12 @@ def top_momentum():
             continue
 
         clean = build_dataset(raw, s)
-
         if clean is None or clean.empty:
             print(f"CLEAN empty: {s}")
             continue
 
         scored = calculate_momentum(clean)
-
         if scored is None or scored.empty:
-            print(f"SCORED empty: {s}")
             continue
 
         latest = scored.iloc[-1]
@@ -47,12 +43,13 @@ def top_momentum():
             "score": float(latest["momentum_score"])
         })
 
-    results = sorted(results, key=lambda x: x["score"], reverse=True)
-
-    print("\nFINAL RESULTS:", results)
-
     if not results:
-        return jsonify({"status": "error", "message": "No stock data fetched"}), 500
+        return jsonify({
+            "status": "error",
+            "message": "No stock data fetched"
+        }), 500
+
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
 
     return jsonify(results)
 
