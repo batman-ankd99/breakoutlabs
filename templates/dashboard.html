@@ -8,6 +8,7 @@
         table { border-collapse: collapse; width: 60%; }
         th, td { border: 1px solid #ddd; padding: 8px; }
         th { background: #f4f4f4; }
+        .loading { color: orange; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -16,6 +17,8 @@
 
 <button onclick="runMomentum()">🚀 Run Momentum Engine</button>
 <button onclick="loadData()">🔄 Refresh Table</button>
+
+<span id="status"></span>
 
 <table>
     <thead>
@@ -28,30 +31,47 @@
 </table>
 
 <script>
+
 async function runMomentum() {
-    await fetch("/momentum/run", { method: "POST" });
-    alert("Momentum recalculated!");
+    document.getElementById("status").innerText = "⏳ Running momentum engine...";
+
+    await fetch("/api/momentum/run", {
+        method: "POST"
+    });
+
+    document.getElementById("status").innerText = "✅ Completed";
     loadData();
 }
 
 async function loadData() {
-    const res = await fetch("/momentum/top");
+    document.getElementById("status").innerText = "⏳ Loading data...";
+
+    const res = await fetch("/api/momentum/latest");
     const data = await res.json();
 
     const table = document.getElementById("table");
     table.innerHTML = "";
 
+    if (!Array.isArray(data) || data.length === 0) {
+        table.innerHTML = `<tr><td colspan="2">No data available</td></tr>`;
+        return;
+    }
+
     data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td>${row.symbol}</td>
-            <td>${row.score.toFixed(4)}</td>
+            <td>${Number(row.score).toFixed(4)}</td>
         `;
         table.appendChild(tr);
     });
+
+    document.getElementById("status").innerText = "✅ Updated";
 }
 
+// auto-load on page open
 loadData();
+
 </script>
 
 </body>
