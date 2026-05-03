@@ -18,7 +18,7 @@ class NSEClient:
                 print(f"No data for {symbol}")
                 return None
 
-            # FIX: flatten columns if needed
+            # FIX multi-index issue
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = df.columns.get_level_values(0)
 

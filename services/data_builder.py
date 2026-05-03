@@ -1,10 +1,7 @@
-import pandas as pd
-
-
 def build_dataset(df, symbol):
     """
-    ONLY ensures schema consistency.
-    NO returns calculation here.
+    ONLY cleaning + validation.
+    NO calculations here.
     """
 
     if df is None or df.empty:
@@ -13,14 +10,13 @@ def build_dataset(df, symbol):
     df = df.copy()
     df["symbol"] = symbol
 
-    required_cols = ["Date", "Open", "High", "Low", "Close", "Volume"]
+    required = ["Date", "Open", "High", "Low", "Close", "Volume"]
 
-    for col in required_cols:
+    for col in required:
         if col not in df.columns:
-            raise ValueError(f"Missing {col} in dataset")
+            raise ValueError(f"Missing column: {col}")
 
-    df = df[required_cols + ["symbol"]]
-
+    df = df[required + ["symbol"]]
     df = df.sort_values("Date").reset_index(drop=True)
 
     return df
