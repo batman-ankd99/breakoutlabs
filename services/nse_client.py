@@ -17,19 +17,40 @@ class NSEClient:
             return None
 
     # -----------------------------
-    # 1 YEAR HISTORY (FIXED + ROBUST)
+    # 1 YEAR HISTORY (FIXED)
     # -----------------------------
     def get_1y_history(self, symbol):
         try:
             print(f"Fetching history: {symbol}")
 
-            raw = equity_history(symbol, "EQ")
+            end_date = date.today()
+            start_date = end_date - timedelta(days=365)
 
-            print("RAW RESPONSE TYPE:", type(raw))
-            print("RAW RESPONSE:", raw)
+            # ✅ CORRECT SIGNATURE FOR YOUR ENVIRONMENT
+            data = equity_history(
+                symbol,
+                "EQ",
+                start_date.strftime("%d-%m-%Y"),
+                end_date.strftime("%d-%m-%Y")
+            )
 
-            return None  # stop pipeline for debugging
+            if data is None:
+                print(f"No data returned for {symbol}")
+                return None
+
+            # Normalize response safely
+            if isinstance(data, dict) and "data" in data:
+                df = pd.DataFrame(data["data"])
+            else:
+                df = pd.DataFrame(data)
+
+            if df is None or df.empty:
+                print(f"Empty dataframe for {symbol}")
+                return None
+
+            print(f"SUCCESS {symbol}: {len(df)} rows")
+            return df
 
         except Exception as e:
-            print(f"ERROR: {e}")
+            print(f"ERROR for {symbol}: {e}")
             return None
