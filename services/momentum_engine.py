@@ -2,48 +2,44 @@ import pandas as pd
 import numpy as np
 
 
-def calculate_momentum(df):
+def calculate_momentum(stock_df, market_df):
 
-    if "Close" not in df.columns:
-        raise ValueError(f"Missing Close column: {df.columns}")
+    stock_df = stock_df.copy().reset_index(drop=True)
+    market_df = market_df.copy().reset_index(drop=True)
 
-    df = df.copy().reset_index(drop=True)
-    df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
+    stock_df["Close"] = pd.to_numeric(stock_df["Close"], errors="coerce")
+    market_df["Close"] = pd.to_numeric(market_df["Close"], errors="coerce")
 
     # -------------------------
     # RETURNS
     # -------------------------
-    df["ret_1y"] = np.log(df["Close"] / df["Close"].shift(180))
-    df["ret_6m"] = np.log(df["Close"] / df["Close"].shift(90))
-    df["ret_3m"] = np.log(df["Close"] / df["Close"].shift(45))
+    stock_df["ret_1y"] = stock_df["Close"] / stock_df["Close"].shift(180)
+    market_df["ret_1y_mkt"] = market_df["Close"] / market_df["Close"].shift(180)
+
+    stock_df["rel_strength"] = stock_df["ret_1y"] / market_df["ret_1y_mkt"]
+
+    # -------------------------
+    # SHORT TERM MOMENTUM
+    # -------------------------
+    stock_df["ret_3m"] = stock_df["Close"] / stock_df["Close"].shift(45)
 
     # -------------------------
     # VOLATILITY
     # -------------------------
-    df["volatility"] = df["Close"].pct_change().rolling(20).std()
+    stock_df["volatility"] = stock_df["Close"].pct_change().rolling(20).std()
+
+    stock_df = stock_df.dropna()
 
     # -------------------------
-    # TREND STRENGTH (IMPORTANT ADDITION)
+    # FINAL SCORE (RELATIVE MOMENTUM)
     # -------------------------
-    df["trend_slope"] = df["Close"].rolling(50).apply(
-        lambda x: (x.iloc[-1] - x.iloc[0]) / (x.iloc[0] + 1e-6)
-    )
+    stock_df["momentum_score"] = (
+        0.6 * stock_df["rel_strength"] +
+        0.3 * stock_df["ret_3m"] +
+        0.1 * stock_df["Close"].pct_change().rolling(20).mean()
+    ) / (stock_df["volatility"] + 1e-6)
 
-    df = df.dropna()
+    # convert to percentile ranking
+    stock_df["momentum_score"] = stock_df["momentum_score"].rank(pct=True)
 
-    # -------------------------
-    # FINAL MOMENTUM SCORE
-    # -------------------------
-    df["momentum_score"] = (
-        0.4 * df["ret_1y"] +
-        0.3 * df["ret_6m"] +
-        0.2 * df["ret_3m"] +
-        0.1 * df["trend_slope"]
-    ) / (df["volatility"] + 1e-6)
-
-    # -------------------------
-    # RANK NORMALIZATION (PERCENTILE BETTER)
-    # -------------------------
-    df["momentum_score"] = df["momentum_score"].rank(pct=True)
-
-    return df.sort_values("momentum_score", ascending=False)
+    return stock_df.sort_values("momentum_score", ascending=False)

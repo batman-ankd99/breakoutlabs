@@ -1,10 +1,13 @@
+from flask import Flask, jsonify
 from services.nse_client import NSEClient
 from services.data_builder import build_dataset
 from services.momentum_engine import calculate_momentum
 
+app = Flask(__name__)
+
 client = NSEClient()
 
-symbols = [
+SYMBOLS = [
     "RELIANCE-EQ",
     "TCS-EQ",
     "INFY-EQ",
@@ -12,30 +15,45 @@ symbols = [
     "ICICIBANK-EQ"
 ]
 
-results = []
 
-for s in symbols:
-    raw = client.get_1y_history(s)
-    if raw is None:
-        continue
-
-    clean = build_dataset(raw, s)
-    if clean is None:
-        continue
-
-    scored = calculate_momentum(clean)
-
-    if scored.empty:
-        print(f"Skipping {s} - no momentum data")
-        continue
-
-    latest = scored.iloc[-1]
-
-    results.append({
-        "symbol": s,
-        "score": float(latest["momentum_score"])
+@app.route("/")
+def home():
+    return jsonify({
+        "service": "breakoutlabs",
+        "status": "running"
     })
 
-results = sorted(results, key=lambda x: x["score"], reverse=True)
 
-print(results)
+@app.route("/momentum/top")
+def momentum_top():
+
+    results = []
+
+    for s in SYMBOLS:
+        raw = client.get_1y_history(s)
+        if raw is None:
+            continue
+
+        clean = build_dataset(raw, s)
+        if clean is None:
+            continue
+
+        scored = calculate_momentum(clean)
+
+        if scored is None or scored.empty:
+            continue
+
+        latest = scored.iloc[-1]
+
+        results.append({
+            "symbol": s,
+            "score": float(latest["momentum_score"])
+        })
+
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    return jsonify(results)
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
