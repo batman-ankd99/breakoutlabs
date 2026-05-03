@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-def build_dataset(df: pd.DataFrame, symbol: str):
+def build_dataset(df, symbol):
 
     if df is None or df.empty:
         print(f"[BUILD] empty input: {symbol}")
@@ -9,36 +9,35 @@ def build_dataset(df: pd.DataFrame, symbol: str):
 
     df = df.copy()
 
-    # normalize column names
+    # normalize
     df.columns = [c.lower() for c in df.columns]
 
-    # ensure close exists
-    if "close" not in df.columns:
-        print(f"[BUILD] Missing Close for {symbol}")
-        print(f"[BUILD] Available columns: {df.columns}")
+    # FINAL SAFETY: fix close column variants
+    close_col = None
+
+    for c in df.columns:
+        if "close" in c:
+            close_col = c
+            break
+
+    if close_col is None:
+        print(f"[BUILD] No close column found for {symbol}")
+        print(f"[BUILD] Columns: {df.columns}")
         return None
 
-    # convert safely
-    df["close"] = pd.to_numeric(df["close"], errors="coerce")
-
-    # IMPORTANT: do NOT wipe full dataset
+    df["close"] = pd.to_numeric(df[close_col], errors="coerce")
     df = df.dropna(subset=["close"])
 
     if len(df) < 50:
-        print(f"[BUILD] Not enough valid data for {symbol}")
+        print(f"[BUILD] Not enough data: {symbol}")
         return None
 
-    # returns (momentum features)
+    # returns
     df["return_3m"] = df["close"].pct_change(63)
     df["return_6m"] = df["close"].pct_change(126)
     df["return_12m"] = df["close"].pct_change(252)
 
-    # keep only valid rows for momentum
-    df = df.dropna(subset=["return_3m", "return_6m", "return_12m"])
-
-    if df.empty:
-        print(f"[BUILD] All rows dropped after feature engineering: {symbol}")
-        return None
+    df = df.dropna()
 
     print(f"[BUILD OK] {symbol}: {len(df)} rows")
 

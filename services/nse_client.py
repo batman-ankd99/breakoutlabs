@@ -14,22 +14,24 @@ class NSEClient:
                 period="1y",
                 interval="1d",
                 progress=False,
-                auto_adjust=False
+                auto_adjust=False,
+                group_by="column"
             )
 
             if df is None or df.empty:
                 print(f"[ERROR] No data for {symbol}")
                 return None
 
-            # Reset index so Date becomes column
             df = df.reset_index()
 
-            # Flatten columns (VERY IMPORTANT for yfinance edge cases)
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = ['_'.join(col).strip() for col in df.columns.values]
+            # 🚨 CRITICAL FIX: flatten ALL column types
+            df.columns = [
+                c.split(".")[0].lower() if "." in str(c) else str(c).lower()
+                for c in df.columns
+            ]
 
-            # Normalize column names
-            df.columns = [c.lower().replace(" ", "_") for c in df.columns]
+            # sometimes yfinance adds weird duplicates → clean again
+            df = df.loc[:, ~df.columns.duplicated()]
 
             print(f"RAW OK {symbol}: {len(df)} rows")
             print(f"COLUMNS: {df.columns.tolist()}")
