@@ -92,15 +92,6 @@ def run_momentum():
         "count": len(results)
     })
 
-@app.route("/momentum/top")
-def top_momentum():
-    try:
-        with open("data/momentum_cache.json", "r") as f:
-            data = json.load(f)
-        return jsonify(data)
-    except:
-        return jsonify({"status": "no_data"}), 404
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
