@@ -4,6 +4,11 @@ from services.momentum_engine import calculate_momentum
 from data.nifty500 import NIFTY500
 import json
 
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 client = NSEClient()
 results = []
 
