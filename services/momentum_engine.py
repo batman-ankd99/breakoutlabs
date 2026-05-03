@@ -11,33 +11,39 @@ def calculate_momentum(df):
     df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
 
     # -------------------------
-    # RETURNS (log-based better)
+    # RETURNS
     # -------------------------
     df["ret_1y"] = np.log(df["Close"] / df["Close"].shift(180))
     df["ret_6m"] = np.log(df["Close"] / df["Close"].shift(90))
     df["ret_3m"] = np.log(df["Close"] / df["Close"].shift(45))
 
     # -------------------------
-    # VOLATILITY (risk penalty)
+    # VOLATILITY
     # -------------------------
     df["volatility"] = df["Close"].pct_change().rolling(20).std()
+
+    # -------------------------
+    # TREND STRENGTH (IMPORTANT ADDITION)
+    # -------------------------
+    df["trend_slope"] = df["Close"].rolling(50).apply(
+        lambda x: (x.iloc[-1] - x.iloc[0]) / (x.iloc[0] + 1e-6)
+    )
 
     df = df.dropna()
 
     # -------------------------
-    # MOMENTUM SCORE (RISK ADJUSTED)
+    # FINAL MOMENTUM SCORE
     # -------------------------
     df["momentum_score"] = (
-        0.5 * df["ret_1y"] +
+        0.4 * df["ret_1y"] +
         0.3 * df["ret_6m"] +
-        0.2 * df["ret_3m"]
+        0.2 * df["ret_3m"] +
+        0.1 * df["trend_slope"]
     ) / (df["volatility"] + 1e-6)
 
     # -------------------------
-    # CLEAN NORMALIZATION
+    # RANK NORMALIZATION (PERCENTILE BETTER)
     # -------------------------
-    df["momentum_score"] = (
-        df["momentum_score"] - df["momentum_score"].mean()
-    ) / df["momentum_score"].std()
+    df["momentum_score"] = df["momentum_score"].rank(pct=True)
 
     return df.sort_values("momentum_score", ascending=False)
