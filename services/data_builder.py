@@ -8,25 +8,30 @@ def build_dataset(df, symbol):
 
         df = df.copy()
 
-        # Normalize column names safely
-        df.columns = [str(c).strip() for c in df.columns]
+        # normalize column names aggressively
+        df.columns = [str(c).strip().lower() for c in df.columns]
 
-        # Ensure Close exists
-        if "Close" not in df.columns:
-            print(f"[BUILD] Missing Close for {symbol}")
+        print(f"[BUILD] columns for {symbol}: {df.columns}")
+
+        # 🔥 handle multiple possible Close variants
+        close_col = None
+        for c in df.columns:
+            if "close" in c:
+                close_col = c
+                break
+
+        if close_col is None:
+            print(f"[BUILD] No Close-like column for {symbol}")
             return None
 
-        df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
-        df = df.dropna(subset=["Close"])
+        df["close"] = pd.to_numeric(df[close_col], errors="coerce")
+        df = df.dropna(subset=["close"])
 
-        # Sort by time if Date exists
-        if "Date" in df.columns:
-            df = df.sort_values("Date")
+        df = df.sort_values(by=df.columns[0])  # Date column usually first
 
-        # returns
-        df["return_3m"] = df["Close"].pct_change(63)
-        df["return_6m"] = df["Close"].pct_change(126)
-        df["return_12m"] = df["Close"].pct_change(252)
+        df["return_3m"] = df["close"].pct_change(63)
+        df["return_6m"] = df["close"].pct_change(126)
+        df["return_12m"] = df["close"].pct_change(252)
 
         df["symbol"] = symbol
 

@@ -6,7 +6,6 @@ from services.momentum_engine import calculate_momentum
 app = Flask(__name__)
 client = NSEClient()
 
-
 SYMBOLS = [
     "RELIANCE-EQ",
     "TCS-EQ",

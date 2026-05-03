@@ -3,14 +3,12 @@ import pandas as pd
 
 def calculate_momentum(stock_df):
     try:
-        if stock_df is None or len(stock_df) == 0:
+        if stock_df is None or stock_df.empty:
             return pd.DataFrame()
 
         df = stock_df.copy()
 
-        required = ["return_12m", "return_6m", "return_3m"]
-
-        for col in required:
+        for col in ["return_12m", "return_6m", "return_3m"]:
             if col not in df.columns:
                 df[col] = 0.0
 

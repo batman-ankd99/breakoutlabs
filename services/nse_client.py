@@ -24,15 +24,18 @@ class NSEClient:
                 print(f"No data for {symbol}")
                 return None
 
-            # IMPORTANT: flatten index issues
+            # 🔥 CRITICAL FIX: flatten columns (THIS WAS THE BUG)
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = df.columns.get_level_values(0)
+
+            # strip spaces just in case
+            df.columns = [str(c).strip() for c in df.columns]
+
             df = df.reset_index()
 
-            # Ensure standard columns exist
-            if "Close" not in df.columns:
-                print(f"No Close column for {symbol}, columns: {df.columns}")
-                return None
-
             print(f"RAW OK {symbol}: {len(df)} rows")
+            print(f"COLUMNS: {list(df.columns)}")
+
             return df
 
         except Exception as e:
