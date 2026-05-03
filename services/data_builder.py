@@ -12,6 +12,7 @@ def build_dataset():
             history = client.get_1y_history(s)
 
             if history is None or len(history) < 2:
+                print(f"Skipping {s} - no data")
                 continue
 
             start = history.iloc[0]["CH_CLOSING_PRICE"]

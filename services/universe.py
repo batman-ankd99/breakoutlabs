@@ -1,6 +1,12 @@
 NIFTY_50 = [
-    "RELIANCE", "TCS", "INFY", "HDFCBANK",
-    "ICICIBANK", "SBIN", "ITC", "LT"
+    "RELIANCE-EQ",
+    "TCS-EQ",
+    "INFY-EQ",
+    "HDFCBANK-EQ",
+    "ICICIBANK-EQ",
+    "SBIN-EQ",
+    "ITC-EQ",
+    "LT-EQ"
 ]
 
 def get_universe():
