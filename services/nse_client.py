@@ -1,56 +1,20 @@
-from nsepython import nse_eq, equity_history
-from datetime import date, timedelta
+import yfinance as yf
 import pandas as pd
 
+def get_1y_history(symbol):
+    try:
+        ticker = symbol.replace("-EQ", "") + ".NS"
+        print(f"Fetching Yahoo Finance: {ticker}")
 
-class NSEClient:
+        df = yf.download(ticker, period="1y")
 
-    # -----------------------------
-    # LIVE QUOTE
-    # -----------------------------
-    def get_quote(self, symbol):
-        try:
-            data = nse_eq(symbol)
-            return data.get("priceInfo", {})
-        except Exception as e:
-            print(f"Quote error for {symbol}: {e}")
+        if df is None or df.empty:
+            print(f"No data for {symbol}")
             return None
 
-    # -----------------------------
-    # 1 YEAR HISTORY (FIXED)
-    # -----------------------------
-    def get_1y_history(self, symbol):
-        try:
-            print(f"Fetching history: {symbol}")
+        print(f"SUCCESS {symbol}: {len(df)} rows")
+        return df
 
-            end_date = date.today()
-            start_date = end_date - timedelta(days=365)
-
-            # ✅ CORRECT SIGNATURE FOR YOUR ENVIRONMENT
-            data = equity_history(
-                symbol,
-                "EQ",
-                start_date.strftime("%d-%m-%Y"),
-                end_date.strftime("%d-%m-%Y")
-            )
-
-            if data is None:
-                print(f"No data returned for {symbol}")
-                return None
-
-            # Normalize response safely
-            if isinstance(data, dict) and "data" in data:
-                df = pd.DataFrame(data["data"])
-            else:
-                df = pd.DataFrame(data)
-
-            if df is None or df.empty:
-                print(f"Empty dataframe for {symbol}")
-                return None
-
-            print(f"SUCCESS {symbol}: {len(df)} rows")
-            return df
-
-        except Exception as e:
-            print(f"ERROR for {symbol}: {e}")
-            return None
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return None
