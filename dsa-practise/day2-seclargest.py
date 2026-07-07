@@ -13,12 +13,14 @@ def second_largest(list1):
         return None
 
     max_num = list1[0]
-    second_num = list1[0]
+    second_num = None
 
     for element in list1:
         if element > max_num:
             second_num = max_num
             max_num = element
-        elif element < max_num and element >= second_num:
+        elif element < max_num and (second_num is None or element >= second_num):
             second_num = element
     return second_num
+
+second_largest(a)
