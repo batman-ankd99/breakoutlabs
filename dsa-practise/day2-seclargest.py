@@ -19,7 +19,7 @@ def second_largest(list1):
         if element > max_num:
             second_num = max_num
             max_num = element
-        elif element < max_num and (second_num is None or element >= second_num):
+        elif element < max_num and (second_num is None or element >= second_num): #when 1st operation before OR is true, it stops evaluating or further
             second_num = element
     return second_num
 
