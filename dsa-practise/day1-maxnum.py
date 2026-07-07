@@ -5,6 +5,9 @@ Write a Python function that takes a list of integers and returns the largest nu
 def max_num(num_list):
     if len(num_list) > 0:
         max_number = num_list[0]
+    else:
+        print("list is empty")
+        return None
     for element in num_list:
         if element > max_number:
             max_number = element
