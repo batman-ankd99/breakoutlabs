@@ -13,11 +13,24 @@ def unique(list_num):
             unique_list.append(elem)
     return unique_list
 
+def unique_faster(list1_num):
+    unique_list = []
+    seen = {}
+
+    for elem in list1_num:
+           if elem in seen:
+               pass
+           else:
+               unique_list.append(elem)
+               seen[elem] = "yes"
+
+    return unique_list
 
 list1 = []
 n = int(input("enter length of list"))
 for i in range(n):
-  elem = input("enter numbers in a list : ")
+  elem = int(input("enter numbers in a list : "))
   list1.append(elem)
 
-unique(list1)
+result = unique_faster(list1)
+print(result)
