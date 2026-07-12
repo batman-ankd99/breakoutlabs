@@ -29,7 +29,7 @@ list1 = []
 n = int(input("enter length of list"))
 for i in range(n):
   elem = input("enter numbers in a list : ")
-  list_num.append(elem)
+  list1.append(elem)
 
 pallin_1(list1)
 pallin_2(list1)
