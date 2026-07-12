@@ -11,7 +11,7 @@ def unique(list_num):
     for elem in list_num:
         if elem not in unique_list:
             unique_list.append(elem)
-    return unique_list        
+    return unique_list
 
 
 list1 = []
@@ -19,3 +19,5 @@ n = int(input("enter length of list"))
 for i in range(n):
   elem = input("enter numbers in a list : ")
   list1.append(elem)
+
+unique(list1)
