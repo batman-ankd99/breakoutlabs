@@ -9,8 +9,9 @@ Output: [(2, 4), (1, 5)]
 def target_sum(list_num, target):
     pairs = []
     for i in range(len(list_num)-1):
-        if list_num[i] + list_num[i+1] == 10:
-            pairs.append((i,j))
+        if list_num[i] + list_num[i+1] == target:
+            pairs.append((list_num[i],list_num[i+1]))
+    return pairs
 
 list1 = []
 n = int(input("enter length of list"))
@@ -18,4 +19,5 @@ for i in range(n):
   elem = int(input("enter numbers in a list : "))
   list1.append(elem)
 
-target_sum(list1, 10)
+result = target_sum(list1, 10)
+print(result)
