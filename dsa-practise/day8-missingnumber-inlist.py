@@ -18,3 +18,23 @@ Can you do this without sorting the list first?
 There's an approach using sum of a range — what's the formula for the sum of 0 to n, and how would comparing it to the actual sum help?
 Can you also think of a second approach (e.g. using XOR) as a mental exercise, even if you only implement one?
 Give it a shot tomorrow and share your attempt first, as usual.
+
+def missing_num(list_num):
+    n = len(list_num) + 1
+    sum_actual = 0
+    sum_withmiss = 0
+    for i in range(n):
+        sum_actual += i
+    for elem in list_num:
+        sum_withmiss +=elem
+    missing_elem = sum_actual - sum_withmiss
+    return missing_elem
+
+list1 = []
+n = int(input("enter length of list"))
+for i in range(n):
+  elem = int(input("enter numbers in a list : "))
+  list1.append(elem)
+
+result = missing_num(list1)
+print(result)
