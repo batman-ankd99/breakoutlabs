@@ -1,4 +1,4 @@
-Day 8 — Problem: Find the Missing Number
+Day 8 (12-07-2026) — Problem: Find the Missing Number
 
 You're given a list containing n distinct integers taken from the range 0 to n (inclusive) — so the list has n elements but the range has n+1 possible values, meaning exactly one number is missing. Write a function that finds it.
 
