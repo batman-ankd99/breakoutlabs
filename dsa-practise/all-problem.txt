@@ -60,7 +60,6 @@ There's an approach using sum of a range — what's the formula for the sum of 0
 Can you also think of a second approach (e.g. using XOR) as a mental exercise, even if you only implement one?
 Give it a shot tomorrow and share your attempt first, as usual.
 
-Nice progression so far — array scans, hashing, two-pointer-ish sum problems, now bit manipulation. A natural next step is the mirror image of Day 8: instead of a missing number, find a number that shows up too many times.
 Day 9 — Problem: Find the Duplicate Number
 Statement:
 You're given a list of n+1 integers where every number is in the range 1 to n (inclusive). Exactly one number is repeated — it could appear two or more times, everything else appears exactly once. Write a function that finds the duplicate — without using a set() or sorting the list.
