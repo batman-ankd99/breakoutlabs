@@ -1,6 +1,8 @@
 import asyncio
+
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
+
 
 NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 
@@ -13,13 +15,15 @@ async def main():
 
             await session.initialize()
 
-            tools = await session.list_tools()
+            result = await session.call_tool(
+                "nse_lookup_symbol",
+                {
+                    "query": "CYIENT"
+                }
+            )
 
-            print("\nAvailable NSE tools:\n")
-
-            for tool in tools.tools:
-                print("-", tool.name)
-                print(" ", tool.description)
+            print("\nNSE Response:\n")
+            print(result)
 
 
 asyncio.run(main())
