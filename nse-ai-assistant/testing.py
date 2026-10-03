@@ -1,6 +1,6 @@
 import asyncio
 from mcp import ClientSession
-from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.streamable_http import streamable_http_client
 
 NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 
