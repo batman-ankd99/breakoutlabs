@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
@@ -20,8 +19,8 @@ async def main():
                 "get_stock_history",
                 {
                     "symbol": "CYIENT",
-                    "start_date": "2026-07-01",
-                    "end_date": "2026-10-01"
+                    "months": 3,
+                    "endDate": "2026-10-01"
                 }
             )
 
