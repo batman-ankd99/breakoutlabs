@@ -13,6 +13,7 @@ async def get_stock_history(symbol, months=3, end_date="today"):
     all_records = []
     remaining_months = months
     corporate_actions = {}
+    week_52 = None
 
     async with streamable_http_client(NSE_URL) as (read, write):
 
@@ -20,7 +21,10 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
             await session.initialize()
 
-            # Get corporate actions
+            # --------------------------------
+            # CORPORATE ACTIONS
+            # --------------------------------
+
             result = await session.call_tool(
                 "get_corporate_actions",
                 {
@@ -39,10 +43,38 @@ async def get_stock_history(symbol, months=3, end_date="today"):
                     result.content[0].text
                 )
 
-            # Get historical data
+            # --------------------------------
+            # 52 WEEK HIGH / LOW
+            # --------------------------------
+
+            result = await session.call_tool(
+                "get_52_week_high_low",
+                {
+                    "symbol": symbol
+                }
+            )
+
+            if result.is_error:
+
+                print("52-week high/low error:")
+                print(result.content)
+
+            else:
+
+                week_52 = json.loads(
+                    result.content[0].text
+                )
+
+            # --------------------------------
+            # HISTORICAL DATA
+            # --------------------------------
+
             while remaining_months > 0:
 
-                chunk_months = min(3, remaining_months)
+                chunk_months = min(
+                    3,
+                    remaining_months
+                )
 
                 result = await session.call_tool(
                     "get_stock_history",
@@ -58,19 +90,26 @@ async def get_stock_history(symbol, months=3, end_date="today"):
                     print("NSE MCP returned an error:")
                     print(result.content)
 
-                    return None, None
+                    return None, None, None
 
                 data = json.loads(
                     result.content[0].text
                 )
 
-                all_records = data["data"] + all_records
+                all_records = (
+                    data["data"]
+                    + all_records
+                )
 
                 end_date = data["next_end_date"]
 
                 remaining_months -= chunk_months
 
-    return all_records, corporate_actions
+    return (
+        all_records,
+        corporate_actions,
+        week_52
+    )
 
 
 def calculate_metrics(records):
@@ -213,13 +252,18 @@ def find_volume_spikes(records, multiplier=2):
 
     for record in records:
 
-        if record["volume"] >= average_volume * multiplier:
+        if record["volume"] >= (
+            average_volume * multiplier
+        ):
 
             spikes.append({
                 "date": record["date"],
                 "volume": record["volume"],
                 "close": record["close"],
-                "multiple": record["volume"] / average_volume
+                "multiple": (
+                    record["volume"]
+                    / average_volume
+                )
             })
 
     return spikes
@@ -276,7 +320,9 @@ def match_corporate_actions(
                     "price_change": move["change_pct"],
                     "action_type": action["actionType"],
                     "purpose": action["purpose"],
-                    "adjustment_factor": action["adjustmentFactor"]
+                    "adjustment_factor": action[
+                        "adjustmentFactor"
+                    ]
                 })
 
     return matches
@@ -319,11 +365,13 @@ def build_important_events(
         )
 
         large_price_move = (
-            abs(price_change) >= price_threshold
+            abs(price_change)
+            >= price_threshold
         )
 
         volume_spike = (
-            volume_multiple >= volume_multiplier
+            volume_multiple
+            >= volume_multiplier
         )
 
         corporate_action = None
@@ -335,7 +383,9 @@ def build_important_events(
                 corporate_action = {
                     "action_type": action["actionType"],
                     "purpose": action["purpose"],
-                    "adjustment_factor": action["adjustmentFactor"]
+                    "adjustment_factor": action[
+                        "adjustmentFactor"
+                    ]
                 }
 
         if (
@@ -362,7 +412,11 @@ async def main():
 
     symbol = "CYIENT"
 
-    records, corporate_actions = await get_stock_history(
+    (
+        records,
+        corporate_actions,
+        week_52
+    ) = await get_stock_history(
         symbol,
         6
     )
@@ -389,13 +443,55 @@ async def main():
     print("METRICS")
     print("==============================")
 
-    print("Start price:", metrics["start_price"])
-    print("End price:", metrics["end_price"])
-    print("Return %:", round(metrics["return_pct"], 2))
-    print("Highest price:", metrics["highest_price"])
-    print("Lowest price:", metrics["lowest_price"])
-    print("Average volume:", round(metrics["average_volume"]))
-    print("Max drawdown %:", round(metrics["max_drawdown"], 2))
+    print(
+        "Start price:",
+        metrics["start_price"]
+    )
+
+    print(
+        "End price:",
+        metrics["end_price"]
+    )
+
+    print(
+        "Return %:",
+        round(metrics["return_pct"], 2)
+    )
+
+    print(
+        "Highest price:",
+        metrics["highest_price"]
+    )
+
+    print(
+        "Lowest price:",
+        metrics["lowest_price"]
+    )
+
+    print(
+        "Average volume:",
+        round(metrics["average_volume"])
+    )
+
+    print(
+        "Max drawdown %:",
+        round(metrics["max_drawdown"], 2)
+    )
+
+    # --------------------------------
+    # 52 WEEK RANGE
+    # --------------------------------
+
+    print("\n==============================")
+    print("52 WEEK HIGH / LOW")
+    print("==============================")
+
+    print(
+        json.dumps(
+            week_52,
+            indent=2
+        )
+    )
 
     # --------------------------------
     # MOVING AVERAGES
@@ -428,7 +524,10 @@ async def main():
 
     print(
         "Price vs 20MA:",
-        round(trend["price_vs_ma20_pct"], 2),
+        round(
+            trend["price_vs_ma20_pct"],
+            2
+        ),
         "%"
         if trend["price_vs_ma20_pct"] is not None
         else ""
@@ -436,7 +535,10 @@ async def main():
 
     print(
         "Price vs 50MA:",
-        round(trend["price_vs_ma50_pct"], 2),
+        round(
+            trend["price_vs_ma50_pct"],
+            2
+        ),
         "%"
         if trend["price_vs_ma50_pct"] is not None
         else ""
@@ -463,7 +565,8 @@ async def main():
             spike["date"],
             "Volume:", spike["volume"],
             "Close:", spike["close"],
-            "Multiple:", round(
+            "Multiple:",
+            round(
                 spike["multiple"],
                 2
             ),
@@ -484,13 +587,16 @@ async def main():
 
         print(
             move["date"],
-            "Change:", round(
+            "Change:",
+            round(
                 move["change_pct"],
                 2
             ),
             "%",
-            "Close:", move["close"],
-            "Volume:", move["volume"]
+            "Close:",
+            move["close"],
+            "Volume:",
+            move["volume"]
         )
 
     # --------------------------------
@@ -525,14 +631,18 @@ async def main():
 
         print(
             match["date"],
-            "Change:", round(
+            "Change:",
+            round(
                 match["price_change"],
                 2
             ),
             "%",
-            "Action:", match["action_type"],
-            "Purpose:", match["purpose"],
-            "Adjustment:", match["adjustment_factor"]
+            "Action:",
+            match["action_type"],
+            "Purpose:",
+            match["purpose"],
+            "Adjustment:",
+            match["adjustment_factor"]
         )
 
     # --------------------------------
