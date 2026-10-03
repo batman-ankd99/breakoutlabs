@@ -407,6 +407,7 @@ def build_important_events(
 
     return events
 
+
 def find_support_levels(records, tolerance=0.02):
 
     lows = [
@@ -431,16 +432,41 @@ def find_support_levels(records, tolerance=0.02):
 
             for existing in levels:
 
-                if abs(level - existing) / existing <= tolerance:
+                if (
+                    abs(level - existing["level"])
+                    / existing["level"]
+                    <= tolerance
+                ):
+
+                    existing["prices"].append(level)
+                    existing["touches"] += 1
+
+                    existing["level"] = (
+                        sum(existing["prices"])
+                        / len(existing["prices"])
+                    )
 
                     matched = True
                     break
 
             if not matched:
 
-                levels.append(level)
+                levels.append({
+                    "level": level,
+                    "touches": 1,
+                    "prices": [level]
+                })
 
-    return sorted(levels)
+    return sorted(
+        [
+            {
+                "level": level["level"],
+                "touches": level["touches"]
+            }
+            for level in levels
+        ],
+        key=lambda x: x["level"]
+    )
 
 
 def find_resistance_levels(records, tolerance=0.02):
@@ -467,16 +493,42 @@ def find_resistance_levels(records, tolerance=0.02):
 
             for existing in levels:
 
-                if abs(level - existing) / existing <= tolerance:
+                if (
+                    abs(level - existing["level"])
+                    / existing["level"]
+                    <= tolerance
+                ):
+
+                    existing["prices"].append(level)
+                    existing["touches"] += 1
+
+                    existing["level"] = (
+                        sum(existing["prices"])
+                        / len(existing["prices"])
+                    )
 
                     matched = True
                     break
 
             if not matched:
 
-                levels.append(level)
+                levels.append({
+                    "level": level,
+                    "touches": 1,
+                    "prices": [level]
+                })
 
-    return sorted(levels)
+    return sorted(
+        [
+            {
+                "level": level["level"],
+                "touches": level["touches"]
+            }
+            for level in levels
+        ],
+        key=lambda x: x["level"]
+    )
+
 
 async def main():
 
@@ -525,7 +577,10 @@ async def main():
 
     print(
         "Return %:",
-        round(metrics["return_pct"], 2)
+        round(
+            metrics["return_pct"],
+            2
+        )
     )
 
     print(
@@ -540,12 +595,17 @@ async def main():
 
     print(
         "Average volume:",
-        round(metrics["average_volume"])
+        round(
+            metrics["average_volume"]
+        )
     )
 
     print(
         "Max drawdown %:",
-        round(metrics["max_drawdown"], 2)
+        round(
+            metrics["max_drawdown"],
+            2
+        )
     )
 
     # --------------------------------
@@ -562,7 +622,6 @@ async def main():
             indent=2
         )
     )
-
 
     # --------------------------------
     # SUPPORT / RESISTANCE
@@ -583,7 +642,12 @@ async def main():
     for level in support_levels:
 
         print(
-            round(level, 2)
+            round(
+                level["level"],
+                2
+            ),
+            "| Touches:",
+            level["touches"]
         )
 
     print("\n==============================")
@@ -593,8 +657,14 @@ async def main():
     for level in resistance_levels:
 
         print(
-            round(level, 2)
+            round(
+                level["level"],
+                2
+            ),
+            "| Touches:",
+            level["touches"]
         )
+
     # --------------------------------
     # MOVING AVERAGES
     # --------------------------------
@@ -612,14 +682,20 @@ async def main():
 
     print(
         "20-day MA:",
-        round(trend["ma20"], 2)
+        round(
+            trend["ma20"],
+            2
+        )
         if trend["ma20"] is not None
         else "N/A"
     )
 
     print(
         "50-day MA:",
-        round(trend["ma50"], 2)
+        round(
+            trend["ma50"],
+            2
+        )
         if trend["ma50"] is not None
         else "N/A"
     )
@@ -655,7 +731,9 @@ async def main():
     # VOLUME SPIKES
     # --------------------------------
 
-    spikes = find_volume_spikes(records)
+    spikes = find_volume_spikes(
+        records
+    )
 
     print("\n==============================")
     print("VOLUME SPIKES")
@@ -665,8 +743,10 @@ async def main():
 
         print(
             spike["date"],
-            "Volume:", spike["volume"],
-            "Close:", spike["close"],
+            "Volume:",
+            spike["volume"],
+            "Close:",
+            spike["close"],
             "Multiple:",
             round(
                 spike["multiple"],
@@ -679,7 +759,9 @@ async def main():
     # LARGE PRICE MOVES
     # --------------------------------
 
-    large_moves = find_large_moves(records)
+    large_moves = find_large_moves(
+        records
+    )
 
     print("\n==============================")
     print("LARGE PRICE MOVES")
