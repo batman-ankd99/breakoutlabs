@@ -17,11 +17,13 @@ async def get_stock_snapshot(symbol):
             await session.initialize()
 
             result = await session.call_tool(
-                "get_bulk_quote",
+                "get_stock_history",
                 {
-                    "symbols": [symbol]
+                    "symbol": "CYIENT",
+                    "start_date": "2026-07-01",
+                    "end_date": "2026-10-01"
                 }
-            )
+              )
 
             data = json.loads(result.content[0].text)
 
@@ -30,7 +32,7 @@ async def get_stock_snapshot(symbol):
 
 async def main():
 
-    quote = await get_stock_snapshot("NATCOPHARM")
+    quote = await get_stock_snapshot("CYIENT")
 
     print("Symbol:", quote["symbol"])
     print("Price:", quote["close"])
