@@ -48,6 +48,34 @@ async def get_stock_history(symbol, months=3, end_date="today"):
     return all_records
 
 
+def calculate_metrics(records):
+
+    start_price = records[0]["close"]
+    end_price = records[-1]["close"]
+
+    highest_price = max(record["high"] for record in records)
+    lowest_price = min(record["low"] for record in records)
+
+    average_volume = sum(
+        record["volume"] for record in records
+    ) / len(records)
+
+    return_pct = (
+        (end_price - start_price)
+        / start_price
+        * 100
+    )
+
+    return {
+        "start_price": start_price,
+        "end_price": end_price,
+        "return_pct": return_pct,
+        "highest_price": highest_price,
+        "lowest_price": lowest_price,
+        "average_volume": average_volume
+    }
+
+
 async def main():
 
     records = await get_stock_history(
@@ -58,17 +86,26 @@ async def main():
     if records is None:
         return
 
+    metrics = calculate_metrics(records)
+
     print("\n==============================")
     print("STOCK HISTORY")
     print("==============================")
 
-    print("Total records:", len(records))
+    print("Records:", len(records))
+    print("From:", records[0]["date"])
+    print("To:", records[-1]["date"])
 
-    print("\nOldest record:")
-    print(records[0])
+    print("\n==============================")
+    print("METRICS")
+    print("==============================")
 
-    print("\nNewest record:")
-    print(records[-1])
+    print("Start price:", metrics["start_price"])
+    print("End price:", metrics["end_price"])
+    print("Return %:", round(metrics["return_pct"], 2))
+    print("Highest price:", metrics["highest_price"])
+    print("Lowest price:", metrics["lowest_price"])
+    print("Average volume:", round(metrics["average_volume"]))
 
 
 asyncio.run(main())
