@@ -116,6 +116,34 @@ def find_volume_spikes(records, multiplier=2):
 
     return spikes
 
+def find_large_moves(records, threshold=3):
+
+    large_moves = []
+
+    for record in records:
+
+        if record["prevClose"] == 0:
+            continue
+
+        change_pct = (
+            (record["close"] - record["prevClose"])
+            / record["prevClose"]
+            * 100
+        )
+
+        if abs(change_pct) >= threshold:
+
+            large_moves.append({
+                "date": record["date"],
+                "close": record["close"],
+                "prev_close": record["prevClose"],
+                "change_pct": change_pct,
+                "volume": record["volume"]
+            })
+
+    return large_moves
+
+
 async def main():
 
     records = await get_stock_history(
@@ -161,6 +189,20 @@ async def main():
             "Close:", spike["close"],
             "Multiple:", round(spike["multiple"], 2), "x"
         )
+
+    large_moves = find_large_moves(records)
+
+    print("\n==============================")
+    print("LARGE PRICE MOVES")
+    print("==============================")
+
+    for move in large_moves:
+        print(
+            move["date"],
+            "Change:", round(move["change_pct"], 2), "%",
+            "Close:", move["close"],
+            "Volume:", move["volume"]
+        )    
 
 
 asyncio.run(main())
