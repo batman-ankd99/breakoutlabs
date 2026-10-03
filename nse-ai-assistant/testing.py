@@ -22,8 +22,11 @@ async def main():
                     "symbol": "CYIENT",
                     "months": 3,
                     "endDate": "2026-10-01"
-                }
+                  }
             )
+
+            print("is_error:", result.is_error)
+            print(result.content)
 
             print("\nRAW NSE RESPONSE:\n")
 
