@@ -11,18 +11,17 @@ NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 async def get_stock_history(symbol, months=3, end_date="today"):
 
     all_records = []
-
     remaining_months = months
 
-    while remaining_months > 0:
+    async with streamable_http_client(NSE_URL) as (read, write):
 
-        chunk_months = min(3, remaining_months)
+        async with ClientSession(read, write) as session:
 
-        async with streamable_http_client(NSE_URL) as (read, write):
+            await session.initialize()
 
-            async with ClientSession(read, write) as session:
+            while remaining_months > 0:
 
-                await session.initialize()
+                chunk_months = min(3, remaining_months)
 
                 result = await session.call_tool(
                     "get_stock_history",
@@ -44,7 +43,7 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
                 end_date = data["next_end_date"]
 
-        remaining_months -= chunk_months
+                remaining_months -= chunk_months
 
     return all_records
 
