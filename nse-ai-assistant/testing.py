@@ -1,5 +1,4 @@
 import asyncio
-import json
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
@@ -17,21 +16,16 @@ async def main():
             await session.initialize()
 
             result = await session.call_tool(
-                "get_bulk_quote",
+                "get_stock_history",
                 {
-                    "symbols": ["CYIENT"]
+                    "symbol": "CYIENT",
+                    "months": 3,
+                    "endDate": "2026-10-01"
                 }
             )
 
-            data = json.loads(result.content[0].text)
-
-            quote = data["quotes"][0]
-
-            print("Symbol:", quote["symbol"])
-            print("Price:", quote["close"])
-            print("Change:", quote["pct_change"], "%")
-            print("Volume:", quote["volume"])
-            print("Date:", quote["date"])
+            print("\nRAW NSE RESPONSE:\n")
+            print(result)
 
 
 asyncio.run(main())
