@@ -130,6 +130,78 @@ def calculate_metrics(records):
     }
 
 
+def calculate_moving_average(records, window):
+
+    if len(records) < window:
+        return None
+
+    closes = [
+        record["close"]
+        for record in records
+    ]
+
+    recent_closes = closes[-window:]
+
+    return sum(recent_closes) / window
+
+
+def calculate_trend(records):
+
+    current_price = records[-1]["close"]
+
+    ma20 = calculate_moving_average(
+        records,
+        20
+    )
+
+    ma50 = calculate_moving_average(
+        records,
+        50
+    )
+
+    result = {
+        "current_price": current_price,
+        "ma20": ma20,
+        "ma50": ma50
+    }
+
+    if ma20 is not None:
+
+        result["price_vs_ma20_pct"] = (
+            (current_price - ma20)
+            / ma20
+            * 100
+        )
+
+    else:
+
+        result["price_vs_ma20_pct"] = None
+
+    if ma50 is not None:
+
+        result["price_vs_ma50_pct"] = (
+            (current_price - ma50)
+            / ma50
+            * 100
+        )
+
+    else:
+
+        result["price_vs_ma50_pct"] = None
+
+    if ma20 is not None and ma50 is not None:
+
+        result["ma20_above_ma50"] = (
+            ma20 > ma50
+        )
+
+    else:
+
+        result["ma20_above_ma50"] = None
+
+    return result
+
+
 def find_volume_spikes(records, multiplier=2):
 
     average_volume = sum(
@@ -317,39 +389,62 @@ async def main():
     print("METRICS")
     print("==============================")
 
+    print("Start price:", metrics["start_price"])
+    print("End price:", metrics["end_price"])
+    print("Return %:", round(metrics["return_pct"], 2))
+    print("Highest price:", metrics["highest_price"])
+    print("Lowest price:", metrics["lowest_price"])
+    print("Average volume:", round(metrics["average_volume"]))
+    print("Max drawdown %:", round(metrics["max_drawdown"], 2))
+
+    # --------------------------------
+    # MOVING AVERAGES
+    # --------------------------------
+
+    trend = calculate_trend(records)
+
+    print("\n==============================")
+    print("MOVING AVERAGES / TREND")
+    print("==============================")
+
     print(
-        "Start price:",
-        metrics["start_price"]
+        "Current price:",
+        trend["current_price"]
     )
 
     print(
-        "End price:",
-        metrics["end_price"]
+        "20-day MA:",
+        round(trend["ma20"], 2)
+        if trend["ma20"] is not None
+        else "N/A"
     )
 
     print(
-        "Return %:",
-        round(metrics["return_pct"], 2)
+        "50-day MA:",
+        round(trend["ma50"], 2)
+        if trend["ma50"] is not None
+        else "N/A"
     )
 
     print(
-        "Highest price:",
-        metrics["highest_price"]
+        "Price vs 20MA:",
+        round(trend["price_vs_ma20_pct"], 2),
+        "%"
+        if trend["price_vs_ma20_pct"] is not None
+        else ""
     )
 
     print(
-        "Lowest price:",
-        metrics["lowest_price"]
+        "Price vs 50MA:",
+        round(trend["price_vs_ma50_pct"], 2),
+        "%"
+        if trend["price_vs_ma50_pct"] is not None
+        else ""
     )
 
     print(
-        "Average volume:",
-        round(metrics["average_volume"])
-    )
-
-    print(
-        "Max drawdown %:",
-        round(metrics["max_drawdown"], 2)
+        "20MA > 50MA:",
+        trend["ma20_above_ma50"]
     )
 
     # --------------------------------
@@ -366,12 +461,12 @@ async def main():
 
         print(
             spike["date"],
-            "Volume:",
-            spike["volume"],
-            "Close:",
-            spike["close"],
-            "Multiple:",
-            round(spike["multiple"], 2),
+            "Volume:", spike["volume"],
+            "Close:", spike["close"],
+            "Multiple:", round(
+                spike["multiple"],
+                2
+            ),
             "x"
         )
 
@@ -389,13 +484,13 @@ async def main():
 
         print(
             move["date"],
-            "Change:",
-            round(move["change_pct"], 2),
+            "Change:", round(
+                move["change_pct"],
+                2
+            ),
             "%",
-            "Close:",
-            move["close"],
-            "Volume:",
-            move["volume"]
+            "Close:", move["close"],
+            "Volume:", move["volume"]
         )
 
     # --------------------------------
@@ -430,15 +525,14 @@ async def main():
 
         print(
             match["date"],
-            "Change:",
-            round(match["price_change"], 2),
+            "Change:", round(
+                match["price_change"],
+                2
+            ),
             "%",
-            "Action:",
-            match["action_type"],
-            "Purpose:",
-            match["purpose"],
-            "Adjustment:",
-            match["adjustment_factor"]
+            "Action:", match["action_type"],
+            "Purpose:", match["purpose"],
+            "Adjustment:", match["adjustment_factor"]
         )
 
     # --------------------------------
@@ -459,12 +553,18 @@ async def main():
         print(
             event["date"],
             "| Change:",
-            round(event["price_change_pct"], 2),
+            round(
+                event["price_change_pct"],
+                2
+            ),
             "%",
             "| Volume:",
             event["volume"],
             "| Volume:",
-            round(event["volume_multiple"], 2),
+            round(
+                event["volume_multiple"],
+                2
+            ),
             "x",
             "| Price move:",
             event["large_price_move"],
