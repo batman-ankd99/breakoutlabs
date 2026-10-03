@@ -407,6 +407,76 @@ def build_important_events(
 
     return events
 
+def find_support_levels(records, tolerance=0.02):
+
+    lows = [
+        record["low"]
+        for record in records
+    ]
+
+    levels = []
+
+    for i in range(2, len(lows) - 2):
+
+        if (
+            lows[i] <= lows[i - 1]
+            and lows[i] <= lows[i + 1]
+            and lows[i] <= lows[i - 2]
+            and lows[i] <= lows[i + 2]
+        ):
+
+            level = lows[i]
+
+            matched = False
+
+            for existing in levels:
+
+                if abs(level - existing) / existing <= tolerance:
+
+                    matched = True
+                    break
+
+            if not matched:
+
+                levels.append(level)
+
+    return sorted(levels)
+
+
+def find_resistance_levels(records, tolerance=0.02):
+
+    highs = [
+        record["high"]
+        for record in records
+    ]
+
+    levels = []
+
+    for i in range(2, len(highs) - 2):
+
+        if (
+            highs[i] >= highs[i - 1]
+            and highs[i] >= highs[i + 1]
+            and highs[i] >= highs[i - 2]
+            and highs[i] >= highs[i + 2]
+        ):
+
+            level = highs[i]
+
+            matched = False
+
+            for existing in levels:
+
+                if abs(level - existing) / existing <= tolerance:
+
+                    matched = True
+                    break
+
+            if not matched:
+
+                levels.append(level)
+
+    return sorted(levels)
 
 async def main():
 
@@ -493,6 +563,38 @@ async def main():
         )
     )
 
+
+    # --------------------------------
+    # SUPPORT / RESISTANCE
+    # --------------------------------
+
+    support_levels = find_support_levels(
+        records
+    )
+
+    resistance_levels = find_resistance_levels(
+        records
+    )
+
+    print("\n==============================")
+    print("SUPPORT LEVELS")
+    print("==============================")
+
+    for level in support_levels:
+
+        print(
+            round(level, 2)
+        )
+
+    print("\n==============================")
+    print("RESISTANCE LEVELS")
+    print("==============================")
+
+    for level in resistance_levels:
+
+        print(
+            round(level, 2)
+        )
     # --------------------------------
     # MOVING AVERAGES
     # --------------------------------
