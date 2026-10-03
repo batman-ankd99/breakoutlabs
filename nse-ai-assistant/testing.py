@@ -16,9 +16,9 @@ async def main():
             await session.initialize()
 
             result = await session.call_tool(
-                "nse_lookup_symbol",
+                "get_bulk_quote",
                 {
-                    "query": "CYIENT"
+                    "symbols": ["CYIENT"]
                 }
             )
 
