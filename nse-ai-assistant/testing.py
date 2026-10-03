@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
@@ -22,8 +23,11 @@ async def main():
                 }
             )
 
-            print("\nNSE Response:\n")
-            print(result)
+            # Get JSON text from MCP response
+            data = json.loads(result.content[0].text)
+
+            print("\nParsed response:\n")
+            print(data)
 
 
 asyncio.run(main())
