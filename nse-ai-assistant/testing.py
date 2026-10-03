@@ -210,15 +210,97 @@ def match_corporate_actions(
     return matches
 
 
+def build_important_events(
+    records,
+    corporate_actions,
+    volume_multiplier=2,
+    price_threshold=3
+):
+
+    average_volume = sum(
+        record["volume"]
+        for record in records
+    ) / len(records)
+
+    actions = corporate_actions.get(
+        "actions",
+        []
+    )
+
+    events = []
+
+    for record in records:
+
+        price_change = 0
+
+        if record["prevClose"] != 0:
+
+            price_change = (
+                (record["close"] - record["prevClose"])
+                / record["prevClose"]
+                * 100
+            )
+
+        volume_multiple = (
+            record["volume"]
+            / average_volume
+        )
+
+        large_price_move = (
+            abs(price_change) >= price_threshold
+        )
+
+        volume_spike = (
+            volume_multiple >= volume_multiplier
+        )
+
+        corporate_action = None
+
+        for action in actions:
+
+            if record["date"] == action["exDate"]:
+
+                corporate_action = {
+                    "action_type": action["actionType"],
+                    "purpose": action["purpose"],
+                    "adjustment_factor": action["adjustmentFactor"]
+                }
+
+        if (
+            large_price_move
+            or volume_spike
+            or corporate_action is not None
+        ):
+
+            events.append({
+                "date": record["date"],
+                "close": record["close"],
+                "price_change_pct": price_change,
+                "volume": record["volume"],
+                "volume_multiple": volume_multiple,
+                "large_price_move": large_price_move,
+                "volume_spike": volume_spike,
+                "corporate_action": corporate_action
+            })
+
+    return events
+
+
 async def main():
 
+    symbol = "CYIENT"
+
     records, corporate_actions = await get_stock_history(
-        "CYIENT",
+        symbol,
         6
     )
 
     if records is None:
         return
+
+    # --------------------------------
+    # METRICS
+    # --------------------------------
 
     metrics = calculate_metrics(records)
 
@@ -226,6 +308,7 @@ async def main():
     print("STOCK HISTORY")
     print("==============================")
 
+    print("Symbol:", symbol)
     print("Records:", len(records))
     print("From:", records[0]["date"])
     print("To:", records[-1]["date"])
@@ -269,7 +352,10 @@ async def main():
         round(metrics["max_drawdown"], 2)
     )
 
-    # Volume spikes
+    # --------------------------------
+    # VOLUME SPIKES
+    # --------------------------------
+
     spikes = find_volume_spikes(records)
 
     print("\n==============================")
@@ -289,7 +375,10 @@ async def main():
             "x"
         )
 
-    # Large price moves
+    # --------------------------------
+    # LARGE PRICE MOVES
+    # --------------------------------
+
     large_moves = find_large_moves(records)
 
     print("\n==============================")
@@ -309,7 +398,10 @@ async def main():
             move["volume"]
         )
 
-    # Corporate actions
+    # --------------------------------
+    # CORPORATE ACTIONS
+    # --------------------------------
+
     print("\n==============================")
     print("CORPORATE ACTIONS")
     print("==============================")
@@ -321,7 +413,10 @@ async def main():
         )
     )
 
-    # Match corporate actions with large moves
+    # --------------------------------
+    # CORPORATE ACTION MATCHES
+    # --------------------------------
+
     matches = match_corporate_actions(
         large_moves,
         corporate_actions
@@ -344,6 +439,39 @@ async def main():
             match["purpose"],
             "Adjustment:",
             match["adjustment_factor"]
+        )
+
+    # --------------------------------
+    # IMPORTANT EVENTS
+    # --------------------------------
+
+    events = build_important_events(
+        records,
+        corporate_actions
+    )
+
+    print("\n==============================")
+    print("IMPORTANT EVENTS")
+    print("==============================")
+
+    for event in events:
+
+        print(
+            event["date"],
+            "| Change:",
+            round(event["price_change_pct"], 2),
+            "%",
+            "| Volume:",
+            event["volume"],
+            "| Volume:",
+            round(event["volume_multiple"], 2),
+            "x",
+            "| Price move:",
+            event["large_price_move"],
+            "| Volume spike:",
+            event["volume_spike"],
+            "| Corporate action:",
+            event["corporate_action"]
         )
 
 
