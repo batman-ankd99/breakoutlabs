@@ -530,9 +530,11 @@ def find_resistance_levels(records, tolerance=0.02):
     )
 
 
-async def main():
+# ============================================
+# COMPLETE STOCK ANALYSIS
+# ============================================
 
-    symbol = "CYIENT"
+async def analyze_stock(symbol, months=6):
 
     (
         records,
@@ -540,87 +542,26 @@ async def main():
         week_52
     ) = await get_stock_history(
         symbol,
-        6
+        months
     )
 
     if records is None:
-        return
+        return None
 
     # --------------------------------
     # METRICS
     # --------------------------------
 
-    metrics = calculate_metrics(records)
-
-    print("\n==============================")
-    print("STOCK HISTORY")
-    print("==============================")
-
-    print("Symbol:", symbol)
-    print("Records:", len(records))
-    print("From:", records[0]["date"])
-    print("To:", records[-1]["date"])
-
-    print("\n==============================")
-    print("METRICS")
-    print("==============================")
-
-    print(
-        "Start price:",
-        metrics["start_price"]
-    )
-
-    print(
-        "End price:",
-        metrics["end_price"]
-    )
-
-    print(
-        "Return %:",
-        round(
-            metrics["return_pct"],
-            2
-        )
-    )
-
-    print(
-        "Highest price:",
-        metrics["highest_price"]
-    )
-
-    print(
-        "Lowest price:",
-        metrics["lowest_price"]
-    )
-
-    print(
-        "Average volume:",
-        round(
-            metrics["average_volume"]
-        )
-    )
-
-    print(
-        "Max drawdown %:",
-        round(
-            metrics["max_drawdown"],
-            2
-        )
+    metrics = calculate_metrics(
+        records
     )
 
     # --------------------------------
-    # 52 WEEK RANGE
+    # TREND
     # --------------------------------
 
-    print("\n==============================")
-    print("52 WEEK HIGH / LOW")
-    print("==============================")
-
-    print(
-        json.dumps(
-            week_52,
-            indent=2
-        )
+    trend = calculate_trend(
+        records
     )
 
     # --------------------------------
@@ -635,125 +576,13 @@ async def main():
         records
     )
 
-    print("\n==============================")
-    print("SUPPORT LEVELS")
-    print("==============================")
-
-    for level in support_levels:
-
-        print(
-            round(
-                level["level"],
-                2
-            ),
-            "| Touches:",
-            level["touches"]
-        )
-
-    print("\n==============================")
-    print("RESISTANCE LEVELS")
-    print("==============================")
-
-    for level in resistance_levels:
-
-        print(
-            round(
-                level["level"],
-                2
-            ),
-            "| Touches:",
-            level["touches"]
-        )
-
-    # --------------------------------
-    # MOVING AVERAGES
-    # --------------------------------
-
-    trend = calculate_trend(records)
-
-    print("\n==============================")
-    print("MOVING AVERAGES / TREND")
-    print("==============================")
-
-    print(
-        "Current price:",
-        trend["current_price"]
-    )
-
-    print(
-        "20-day MA:",
-        round(
-            trend["ma20"],
-            2
-        )
-        if trend["ma20"] is not None
-        else "N/A"
-    )
-
-    print(
-        "50-day MA:",
-        round(
-            trend["ma50"],
-            2
-        )
-        if trend["ma50"] is not None
-        else "N/A"
-    )
-
-    print(
-        "Price vs 20MA:",
-        round(
-            trend["price_vs_ma20_pct"],
-            2
-        ),
-        "%"
-        if trend["price_vs_ma20_pct"] is not None
-        else ""
-    )
-
-    print(
-        "Price vs 50MA:",
-        round(
-            trend["price_vs_ma50_pct"],
-            2
-        ),
-        "%"
-        if trend["price_vs_ma50_pct"] is not None
-        else ""
-    )
-
-    print(
-        "20MA > 50MA:",
-        trend["ma20_above_ma50"]
-    )
-
     # --------------------------------
     # VOLUME SPIKES
     # --------------------------------
 
-    spikes = find_volume_spikes(
+    volume_spikes = find_volume_spikes(
         records
     )
-
-    print("\n==============================")
-    print("VOLUME SPIKES")
-    print("==============================")
-
-    for spike in spikes:
-
-        print(
-            spike["date"],
-            "Volume:",
-            spike["volume"],
-            "Close:",
-            spike["close"],
-            "Multiple:",
-            round(
-                spike["multiple"],
-                2
-            ),
-            "x"
-        )
 
     # --------------------------------
     # LARGE PRICE MOVES
@@ -763,110 +592,90 @@ async def main():
         records
     )
 
-    print("\n==============================")
-    print("LARGE PRICE MOVES")
-    print("==============================")
-
-    for move in large_moves:
-
-        print(
-            move["date"],
-            "Change:",
-            round(
-                move["change_pct"],
-                2
-            ),
-            "%",
-            "Close:",
-            move["close"],
-            "Volume:",
-            move["volume"]
-        )
-
-    # --------------------------------
-    # CORPORATE ACTIONS
-    # --------------------------------
-
-    print("\n==============================")
-    print("CORPORATE ACTIONS")
-    print("==============================")
-
-    print(
-        json.dumps(
-            corporate_actions,
-            indent=2
-        )
-    )
-
     # --------------------------------
     # CORPORATE ACTION MATCHES
     # --------------------------------
 
-    matches = match_corporate_actions(
-        large_moves,
-        corporate_actions
-    )
-
-    print("\n==============================")
-    print("CORPORATE ACTION MATCHES")
-    print("==============================")
-
-    for match in matches:
-
-        print(
-            match["date"],
-            "Change:",
-            round(
-                match["price_change"],
-                2
-            ),
-            "%",
-            "Action:",
-            match["action_type"],
-            "Purpose:",
-            match["purpose"],
-            "Adjustment:",
-            match["adjustment_factor"]
+    corporate_action_matches = (
+        match_corporate_actions(
+            large_moves,
+            corporate_actions
         )
+    )
 
     # --------------------------------
     # IMPORTANT EVENTS
     # --------------------------------
 
-    events = build_important_events(
-        records,
-        corporate_actions
+    important_events = (
+        build_important_events(
+            records,
+            corporate_actions
+        )
     )
 
-    print("\n==============================")
-    print("IMPORTANT EVENTS")
-    print("==============================")
+    # --------------------------------
+    # FINAL ANALYSIS OBJECT
+    # --------------------------------
 
-    for event in events:
+    analysis = {
 
-        print(
-            event["date"],
-            "| Change:",
-            round(
-                event["price_change_pct"],
-                2
-            ),
-            "%",
-            "| Volume:",
-            event["volume"],
-            "| Volume:",
-            round(
-                event["volume_multiple"],
-                2
-            ),
-            "x",
-            "| Price move:",
-            event["large_price_move"],
-            "| Volume spike:",
-            event["volume_spike"],
-            "| Corporate action:",
-            event["corporate_action"]
+        "symbol": symbol,
+
+        "period": {
+            "from": records[0]["date"],
+            "to": records[-1]["date"],
+            "trading_days": len(records)
+        },
+
+        "metrics": metrics,
+
+        "52_week": week_52,
+
+        "trend": trend,
+
+        "support_levels": support_levels,
+
+        "resistance_levels": resistance_levels,
+
+        "volume_spikes": volume_spikes,
+
+        "large_moves": large_moves,
+
+        "corporate_actions": corporate_actions,
+
+        "corporate_action_matches": (
+            corporate_action_matches
+        ),
+
+        "important_events": important_events
+    }
+
+    return analysis
+
+
+# ============================================
+# MAIN
+# ============================================
+
+async def main():
+
+    symbol = "CYIENT"
+
+    analysis = await analyze_stock(
+        symbol,
+        6
+    )
+
+    if analysis is None:
+        return
+
+    print(
+        json.dumps(
+            analysis,
+            indent=2
         )
+    )
 
 
 asyncio.run(main())
