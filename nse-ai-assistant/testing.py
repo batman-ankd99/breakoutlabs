@@ -1,3 +1,4 @@
+```python
 import asyncio
 import json
 
@@ -12,6 +13,7 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
     all_records = []
     remaining_months = months
+    corporate_actions = []
 
     async with streamable_http_client(NSE_URL) as (read, write):
 
@@ -19,6 +21,23 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
             await session.initialize()
 
+            # Get corporate actions
+            result = await session.call_tool(
+                "get_corporate_actions",
+                {
+                    "symbol": symbol
+                }
+            )
+
+            if result.is_error:
+                print("Corporate actions error:")
+                print(result.content)
+            else:
+                corporate_actions = json.loads(
+                    result.content[0].text
+                )
+
+            # Get historical data
             while remaining_months > 0:
 
                 chunk_months = min(3, remaining_months)
@@ -35,9 +54,11 @@ async def get_stock_history(symbol, months=3, end_date="today"):
                 if result.is_error:
                     print("NSE MCP returned an error:")
                     print(result.content)
-                    return None
+                    return None, None
 
-                data = json.loads(result.content[0].text)
+                data = json.loads(
+                    result.content[0].text
+                )
 
                 all_records = data["data"] + all_records
 
@@ -45,7 +66,7 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
                 remaining_months -= chunk_months
 
-    return all_records
+    return all_records, corporate_actions
 
 
 def calculate_metrics(records):
@@ -53,8 +74,13 @@ def calculate_metrics(records):
     start_price = records[0]["close"]
     end_price = records[-1]["close"]
 
-    highest_price = max(record["high"] for record in records)
-    lowest_price = min(record["low"] for record in records)
+    highest_price = max(
+        record["high"] for record in records
+    )
+
+    lowest_price = min(
+        record["low"] for record in records
+    )
 
     average_volume = sum(
         record["volume"] for record in records
@@ -95,6 +121,7 @@ def calculate_metrics(records):
         "max_drawdown": max_drawdown
     }
 
+
 def find_volume_spikes(records, multiplier=2):
 
     average_volume = sum(
@@ -115,6 +142,7 @@ def find_volume_spikes(records, multiplier=2):
             })
 
     return spikes
+
 
 def find_large_moves(records, threshold=3):
 
@@ -146,7 +174,7 @@ def find_large_moves(records, threshold=3):
 
 async def main():
 
-    records = await get_stock_history(
+    records, corporate_actions = await get_stock_history(
         "CYIENT",
         6
     )
@@ -183,6 +211,7 @@ async def main():
     print("==============================")
 
     for spike in spikes:
+
         print(
             spike["date"],
             "Volume:", spike["volume"],
@@ -197,12 +226,22 @@ async def main():
     print("==============================")
 
     for move in large_moves:
+
         print(
             move["date"],
             "Change:", round(move["change_pct"], 2), "%",
             "Close:", move["close"],
             "Volume:", move["volume"]
-        )    
+        )
+
+    print("\n==============================")
+    print("CORPORATE ACTIONS")
+    print("==============================")
+
+    print(json.dumps(
+        corporate_actions,
+        indent=2
+    ))
 
 
 asyncio.run(main())
