@@ -169,3 +169,182 @@ def find_large_moves(records, threshold=3):
         )
 
         if abs(change_pct) >= threshold:
+
+            large_moves.append({
+                "date": record["date"],
+                "close": record["close"],
+                "prev_close": record["prevClose"],
+                "change_pct": change_pct,
+                "volume": record["volume"]
+            })
+
+    return large_moves
+
+
+def match_corporate_actions(
+    large_moves,
+    corporate_actions
+):
+
+    matches = []
+
+    actions = corporate_actions.get(
+        "actions",
+        []
+    )
+
+    for move in large_moves:
+
+        for action in actions:
+
+            if move["date"] == action["exDate"]:
+
+                matches.append({
+                    "date": move["date"],
+                    "price_change": move["change_pct"],
+                    "action_type": action["actionType"],
+                    "purpose": action["purpose"],
+                    "adjustment_factor": action["adjustmentFactor"]
+                })
+
+    return matches
+
+
+async def main():
+
+    records, corporate_actions = await get_stock_history(
+        "CYIENT",
+        6
+    )
+
+    if records is None:
+        return
+
+    metrics = calculate_metrics(records)
+
+    print("\n==============================")
+    print("STOCK HISTORY")
+    print("==============================")
+
+    print("Records:", len(records))
+    print("From:", records[0]["date"])
+    print("To:", records[-1]["date"])
+
+    print("\n==============================")
+    print("METRICS")
+    print("==============================")
+
+    print(
+        "Start price:",
+        metrics["start_price"]
+    )
+
+    print(
+        "End price:",
+        metrics["end_price"]
+    )
+
+    print(
+        "Return %:",
+        round(metrics["return_pct"], 2)
+    )
+
+    print(
+        "Highest price:",
+        metrics["highest_price"]
+    )
+
+    print(
+        "Lowest price:",
+        metrics["lowest_price"]
+    )
+
+    print(
+        "Average volume:",
+        round(metrics["average_volume"])
+    )
+
+    print(
+        "Max drawdown %:",
+        round(metrics["max_drawdown"], 2)
+    )
+
+    # Volume spikes
+    spikes = find_volume_spikes(records)
+
+    print("\n==============================")
+    print("VOLUME SPIKES")
+    print("==============================")
+
+    for spike in spikes:
+
+        print(
+            spike["date"],
+            "Volume:",
+            spike["volume"],
+            "Close:",
+            spike["close"],
+            "Multiple:",
+            round(spike["multiple"], 2),
+            "x"
+        )
+
+    # Large price moves
+    large_moves = find_large_moves(records)
+
+    print("\n==============================")
+    print("LARGE PRICE MOVES")
+    print("==============================")
+
+    for move in large_moves:
+
+        print(
+            move["date"],
+            "Change:",
+            round(move["change_pct"], 2),
+            "%",
+            "Close:",
+            move["close"],
+            "Volume:",
+            move["volume"]
+        )
+
+    # Corporate actions
+    print("\n==============================")
+    print("CORPORATE ACTIONS")
+    print("==============================")
+
+    print(
+        json.dumps(
+            corporate_actions,
+            indent=2
+        )
+    )
+
+    # Match corporate actions with large moves
+    matches = match_corporate_actions(
+        large_moves,
+        corporate_actions
+    )
+
+    print("\n==============================")
+    print("CORPORATE ACTION MATCHES")
+    print("==============================")
+
+    for match in matches:
+
+        print(
+            match["date"],
+            "Change:",
+            round(match["price_change"], 2),
+            "%",
+            "Action:",
+            match["action_type"],
+            "Purpose:",
+            match["purpose"],
+            "Adjustment:",
+            match["adjustment_factor"]
+        )
+
+
+asyncio.run(main())
