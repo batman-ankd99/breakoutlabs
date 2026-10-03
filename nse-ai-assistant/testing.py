@@ -8,6 +8,10 @@ from mcp.client.streamable_http import streamable_http_client
 NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 
 
+# ============================================
+# GET STOCK DATA FROM NSE MCP
+# ============================================
+
 async def get_stock_history(symbol, months=3, end_date="today"):
 
     all_records = []
@@ -112,6 +116,10 @@ async def get_stock_history(symbol, months=3, end_date="today"):
     )
 
 
+# ============================================
+# BASIC METRICS
+# ============================================
+
 def calculate_metrics(records):
 
     start_price = records[0]["close"]
@@ -169,6 +177,10 @@ def calculate_metrics(records):
     }
 
 
+# ============================================
+# MOVING AVERAGE
+# ============================================
+
 def calculate_moving_average(records, window):
 
     if len(records) < window:
@@ -183,6 +195,10 @@ def calculate_moving_average(records, window):
 
     return sum(recent_closes) / window
 
+
+# ============================================
+# TREND
+# ============================================
 
 def calculate_trend(records):
 
@@ -241,6 +257,10 @@ def calculate_trend(records):
     return result
 
 
+# ============================================
+# VOLUME SPIKES
+# ============================================
+
 def find_volume_spikes(records, multiplier=2):
 
     average_volume = sum(
@@ -269,6 +289,10 @@ def find_volume_spikes(records, multiplier=2):
     return spikes
 
 
+# ============================================
+# LARGE PRICE MOVES
+# ============================================
+
 def find_large_moves(records, threshold=3):
 
     large_moves = []
@@ -296,6 +320,10 @@ def find_large_moves(records, threshold=3):
 
     return large_moves
 
+
+# ============================================
+# CORPORATE ACTION MATCHING
+# ============================================
 
 def match_corporate_actions(
     large_moves,
@@ -327,6 +355,10 @@ def match_corporate_actions(
 
     return matches
 
+
+# ============================================
+# IMPORTANT EVENTS
+# ============================================
 
 def build_important_events(
     records,
@@ -408,6 +440,10 @@ def build_important_events(
     return events
 
 
+# ============================================
+# SUPPORT LEVELS
+# ============================================
+
 def find_support_levels(records, tolerance=0.02):
 
     lows = [
@@ -468,6 +504,10 @@ def find_support_levels(records, tolerance=0.02):
         key=lambda x: x["level"]
     )
 
+
+# ============================================
+# RESISTANCE LEVELS
+# ============================================
 
 def find_resistance_levels(records, tolerance=0.02):
 
@@ -655,6 +695,88 @@ async def analyze_stock(symbol, months=6):
 
 
 # ============================================
+# LLM-READY SUMMARY
+# ============================================
+
+def build_llm_summary(analysis):
+
+    summary = {
+
+        "symbol": analysis["symbol"],
+
+        "period": analysis["period"],
+
+        "current_price": analysis[
+            "trend"
+        ]["current_price"],
+
+        "performance": {
+
+            "return_pct": analysis[
+                "metrics"
+            ]["return_pct"],
+
+            "max_drawdown_pct": analysis[
+                "metrics"
+            ]["max_drawdown"],
+
+            "highest_price": analysis[
+                "metrics"
+            ]["highest_price"],
+
+            "lowest_price": analysis[
+                "metrics"
+            ]["lowest_price"]
+        },
+
+        "52_week": analysis[
+            "52_week"
+        ],
+
+        "trend": {
+
+            "ma20": analysis[
+                "trend"
+            ]["ma20"],
+
+            "ma50": analysis[
+                "trend"
+            ]["ma50"],
+
+            "price_vs_ma20_pct": analysis[
+                "trend"
+            ]["price_vs_ma20_pct"],
+
+            "price_vs_ma50_pct": analysis[
+                "trend"
+            ]["price_vs_ma50_pct"],
+
+            "ma20_above_ma50": analysis[
+                "trend"
+            ]["ma20_above_ma50"]
+        },
+
+        "support_levels": analysis[
+            "support_levels"
+        ],
+
+        "resistance_levels": analysis[
+            "resistance_levels"
+        ],
+
+        "important_events": analysis[
+            "important_events"
+        ],
+
+        "corporate_actions": analysis[
+            "corporate_actions"
+        ]
+    }
+
+    return summary
+
+
+# ============================================
 # MAIN
 # ============================================
 
@@ -670,9 +792,13 @@ async def main():
     if analysis is None:
         return
 
+    llm_summary = build_llm_summary(
+        analysis
+    )
+
     print(
         json.dumps(
-            analysis,
+            llm_summary,
             indent=2
         )
     )
