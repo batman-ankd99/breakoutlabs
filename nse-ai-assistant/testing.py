@@ -27,13 +27,13 @@ async def get_stock_history(symbol, months=3, end_date="today"):
                 }
             )
 
-            # Check if NSE returned an MCP error
+            # Check for MCP error
             if result.is_error:
                 print("NSE MCP returned an error:")
                 print(result.content)
                 return None
 
-            # Convert MCP response text -> Python dictionary
+            # Convert JSON string into Python dictionary
             data = json.loads(result.content[0].text)
 
             return data
@@ -41,11 +41,8 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
 async def main():
 
-    symbol = "CYIENT"
-
-    # Get 3 months of history
     data = await get_stock_history(
-        symbol=symbol,
+        symbol="CYIENT",
         months=3,
         end_date="2026-10-01"
     )
@@ -57,42 +54,23 @@ async def main():
     print("STOCK HISTORY")
     print("==============================")
 
-    print("\nSymbol:")
-    print(data["symbol"])
-
-    print("\nFrom date:")
-    print(data["from_date"])
-
-    print("\nTo date:")
-    print(data["to_date"])
-
-    print("\nTrading days:")
-    print(data["trading_days"])
-
-    print("\nSource:")
-    print(data["source"])
+    print("Symbol:", data["symbol"])
+    print("From:", data["from_date"])
+    print("To:", data["to_date"])
+    print("Trading days:", data["trading_days"])
 
     print("\n==============================")
     print("SUMMARY")
     print("==============================")
 
-    print("\nPeriod low:")
-    print(data["summary"]["period_low"])
+    summary = data["summary"]
 
-    print("\nPeriod high:")
-    print(data["summary"]["period_high"])
-
-    print("\nFirst close:")
-    print(data["summary"]["first_close"])
-
-    print("\nLast close:")
-    print(data["summary"]["last_close"])
-
-    print("\nReturn %:")
-    print(data["summary"]["return_pct"])
-
-    print("\nAverage daily volume:")
-    print(data["summary"]["avg_daily_vol"])
+    print("Period low:", summary["period_low"])
+    print("Period high:", summary["period_high"])
+    print("First close:", summary["first_close"])
+    print("Last close:", summary["last_close"])
+    print("Return %:", summary["return_pct"])
+    print("Average volume:", summary["avg_daily_vol"])
 
     print("\n==============================")
     print("DAILY DATA")
@@ -100,8 +78,7 @@ async def main():
 
     records = data["data"]
 
-    print("\nNumber of records:")
-    print(len(records))
+    print("Number of records:", len(records))
 
     print("\nFirst record:")
     print(records[0])
@@ -109,12 +86,7 @@ async def main():
     print("\nLast record:")
     print(records[-1])
 
-    print("\n==============================")
-    print("NEXT CHUNK")
-    print("==============================")
-
-    print("\nNext end date:")
-    print(data["next_end_date"])
+    print("\nNext end date:", data["next_end_date"])
 
 
 asyncio.run(main())
