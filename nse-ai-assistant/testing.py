@@ -25,10 +25,8 @@ async def main():
                 }
             )
 
-            data = json.loads(result.content[0].text)
-
-            print("\nHistorical data:\n")
-            print(data)
+            print("\nRAW NSE RESPONSE:\n")
+            print(result)
 
 
 asyncio.run(main())
