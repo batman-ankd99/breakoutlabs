@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from mcp import ClientSession
 from mcp.client.streamable_http import streamable_http_client
@@ -25,7 +26,18 @@ async def main():
             )
 
             print("\nRAW NSE RESPONSE:\n")
-            print(result)
+
+            data = json.loads(result.content[0].text)
+
+            print("\nNumber of records:", len(data["history"]))
+
+            print("\nFirst record:")
+            print(data["history"][0])
+
+            print("\nLast record:")
+            print(data["history"][-1])
+
+            print("\nNext end date:", data["next_end_date"])
 
 
 asyncio.run(main())
