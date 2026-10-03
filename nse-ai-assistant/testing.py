@@ -12,7 +12,7 @@ async def get_stock_history(symbol, months=3, end_date="today"):
 
     all_records = []
     remaining_months = months
-    corporate_actions = []
+    corporate_actions = {}
 
     async with streamable_http_client(NSE_URL) as (read, write):
 
@@ -29,9 +29,12 @@ async def get_stock_history(symbol, months=3, end_date="today"):
             )
 
             if result.is_error:
+
                 print("Corporate actions error:")
                 print(result.content)
+
             else:
+
                 corporate_actions = json.loads(
                     result.content[0].text
                 )
@@ -51,8 +54,10 @@ async def get_stock_history(symbol, months=3, end_date="today"):
                 )
 
                 if result.is_error:
+
                     print("NSE MCP returned an error:")
                     print(result.content)
+
                     return None, None
 
                 data = json.loads(
@@ -74,15 +79,18 @@ def calculate_metrics(records):
     end_price = records[-1]["close"]
 
     highest_price = max(
-        record["high"] for record in records
+        record["high"]
+        for record in records
     )
 
     lowest_price = min(
-        record["low"] for record in records
+        record["low"]
+        for record in records
     )
 
     average_volume = sum(
-        record["volume"] for record in records
+        record["volume"]
+        for record in records
     ) / len(records)
 
     return_pct = (
@@ -92,6 +100,7 @@ def calculate_metrics(records):
     )
 
     peak = records[0]["close"]
+
     max_drawdown = 0
 
     for record in records:
@@ -124,7 +133,8 @@ def calculate_metrics(records):
 def find_volume_spikes(records, multiplier=2):
 
     average_volume = sum(
-        record["volume"] for record in records
+        record["volume"]
+        for record in records
     ) / len(records)
 
     spikes = []
@@ -159,88 +169,3 @@ def find_large_moves(records, threshold=3):
         )
 
         if abs(change_pct) >= threshold:
-
-            large_moves.append({
-                "date": record["date"],
-                "close": record["close"],
-                "prev_close": record["prevClose"],
-                "change_pct": change_pct,
-                "volume": record["volume"]
-            })
-
-    return large_moves
-
-
-async def main():
-
-    records, corporate_actions = await get_stock_history(
-        "CYIENT",
-        6
-    )
-
-    if records is None:
-        return
-
-    metrics = calculate_metrics(records)
-
-    print("\n==============================")
-    print("STOCK HISTORY")
-    print("==============================")
-
-    print("Records:", len(records))
-    print("From:", records[0]["date"])
-    print("To:", records[-1]["date"])
-
-    print("\n==============================")
-    print("METRICS")
-    print("==============================")
-
-    print("Start price:", metrics["start_price"])
-    print("End price:", metrics["end_price"])
-    print("Return %:", round(metrics["return_pct"], 2))
-    print("Highest price:", metrics["highest_price"])
-    print("Lowest price:", metrics["lowest_price"])
-    print("Average volume:", round(metrics["average_volume"]))
-    print("Max drawdown %:", round(metrics["max_drawdown"], 2))
-
-    spikes = find_volume_spikes(records)
-
-    print("\n==============================")
-    print("VOLUME SPIKES")
-    print("==============================")
-
-    for spike in spikes:
-
-        print(
-            spike["date"],
-            "Volume:", spike["volume"],
-            "Close:", spike["close"],
-            "Multiple:", round(spike["multiple"], 2), "x"
-        )
-
-    large_moves = find_large_moves(records)
-
-    print("\n==============================")
-    print("LARGE PRICE MOVES")
-    print("==============================")
-
-    for move in large_moves:
-
-        print(
-            move["date"],
-            "Change:", round(move["change_pct"], 2), "%",
-            "Close:", move["close"],
-            "Volume:", move["volume"]
-        )
-
-    print("\n==============================")
-    print("CORPORATE ACTIONS")
-    print("==============================")
-
-    print(json.dumps(
-        corporate_actions,
-        indent=2
-    ))
-
-
-asyncio.run(main())
