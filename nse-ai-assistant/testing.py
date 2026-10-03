@@ -8,7 +8,7 @@ from mcp.client.streamable_http import streamable_http_client
 NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 
 
-async def main():
+async def get_stock_snapshot(symbol):
 
     async with streamable_http_client(NSE_URL) as (read, write):
 
@@ -19,22 +19,24 @@ async def main():
             result = await session.call_tool(
                 "get_bulk_quote",
                 {
-                    "symbols": ["CYIENT"]
+                    "symbols": [symbol]
                 }
             )
 
-            # Get JSON text from MCP response
             data = json.loads(result.content[0].text)
-            quote = data["quotes"][0]
 
-            print("Symbol:", quote["symbol"])
-            print("Price:", quote["close"])
-            print("Change:", quote["pct_change"], "%")
-            print("Volume:", quote["volume"])
-            print("Date:", quote["date"])
+            return data["quotes"][0]
 
-            print("\nParsed response:\n")
-            print(data)
+
+async def main():
+
+    quote = await get_stock_snapshot("CYIENT")
+
+    print("Symbol:", quote["symbol"])
+    print("Price:", quote["close"])
+    print("Change:", quote["pct_change"], "%")
+    print("Volume:", quote["volume"])
+    print("Date:", quote["date"])
 
 
 asyncio.run(main())
