@@ -30,7 +30,7 @@ async def get_stock_snapshot(symbol):
 
 async def main():
 
-    quote = await get_stock_snapshot("CYIENT")
+    quote = await get_stock_snapshot("NATCOPHARM")
 
     print("Symbol:", quote["symbol"])
     print("Price:", quote["close"])
