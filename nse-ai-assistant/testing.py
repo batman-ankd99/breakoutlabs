@@ -25,6 +25,13 @@ async def main():
 
             # Get JSON text from MCP response
             data = json.loads(result.content[0].text)
+            quote = data["quotes"][0]
+
+            print("Symbol:", quote["symbol"])
+            print("Price:", quote["close"])
+            print("Change:", quote["pct_change"], "%")
+            print("Volume:", quote["volume"])
+            print("Date:", quote["date"])
 
             print("\nParsed response:\n")
             print(data)
