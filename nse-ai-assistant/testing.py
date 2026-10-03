@@ -95,6 +95,26 @@ def calculate_metrics(records):
         "max_drawdown": max_drawdown
     }
 
+def find_volume_spikes(records, multiplier=2):
+
+    average_volume = sum(
+        record["volume"] for record in records
+    ) / len(records)
+
+    spikes = []
+
+    for record in records:
+
+        if record["volume"] >= average_volume * multiplier:
+
+            spikes.append({
+                "date": record["date"],
+                "volume": record["volume"],
+                "close": record["close"],
+                "multiple": record["volume"] / average_volume
+            })
+
+    return spikes
 
 async def main():
 
@@ -127,6 +147,20 @@ async def main():
     print("Lowest price:", metrics["lowest_price"])
     print("Average volume:", round(metrics["average_volume"]))
     print("Max drawdown %:", round(metrics["max_drawdown"], 2))
+
+    spikes = find_volume_spikes(records)
+
+    print("\n==============================")
+    print("VOLUME SPIKES")
+    print("==============================")
+
+    for spike in spikes:
+        print(
+            spike["date"],
+            "Volume:", spike["volume"],
+            "Close:", spike["close"],
+            "Multiple:", round(spike["multiple"], 2), "x"
+        )
 
 
 asyncio.run(main())
