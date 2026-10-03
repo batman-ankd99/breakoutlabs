@@ -66,13 +66,33 @@ def calculate_metrics(records):
         * 100
     )
 
+    peak = records[0]["close"]
+    max_drawdown = 0
+
+    for record in records:
+
+        close = record["close"]
+
+        if close > peak:
+            peak = close
+
+        drawdown = (
+            (close - peak)
+            / peak
+            * 100
+        )
+
+        if drawdown < max_drawdown:
+            max_drawdown = drawdown
+
     return {
         "start_price": start_price,
         "end_price": end_price,
         "return_pct": return_pct,
         "highest_price": highest_price,
         "lowest_price": lowest_price,
-        "average_volume": average_volume
+        "average_volume": average_volume,
+        "max_drawdown": max_drawdown
     }
 
 
@@ -106,6 +126,7 @@ async def main():
     print("Highest price:", metrics["highest_price"])
     print("Lowest price:", metrics["lowest_price"])
     print("Average volume:", round(metrics["average_volume"]))
+    print("Max drawdown %:", round(metrics["max_drawdown"], 2))
 
 
 asyncio.run(main())
