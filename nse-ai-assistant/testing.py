@@ -27,7 +27,7 @@ async def get_stock_snapshot(symbol):
 
             data = json.loads(result.content[0].text)
 
-            return data["quotes"][0]
+            print(data)
 
 
 async def main():
