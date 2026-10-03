@@ -32,15 +32,11 @@ async def main():
 
             data = json.loads(result.content[0].text)
 
-            print("\nNumber of records:", len(data["history"]))
+            print("\nTop-level keys:")
+            print(data.keys())
 
-            print("\nFirst record:")
-            print(data["history"][0])
-
-            print("\nLast record:")
-            print(data["history"][-1])
-
-            print("\nNext end date:", data["next_end_date"])
+            print("\nFull parsed structure:")
+            print(data)
 
 
 asyncio.run(main())
