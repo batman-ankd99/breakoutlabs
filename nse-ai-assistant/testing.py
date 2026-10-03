@@ -7,7 +7,7 @@ NSE_URL = "https://mcp.nseindia.in/bhavcopy/cm/mcp"
 
 async def main():
 
-    async with streamable_http_client(NSE_URL) as (read, write, _):
+    async with streamable_http_client(NSE_URL) as (read, write):
 
         async with ClientSession(read, write) as session:
 
